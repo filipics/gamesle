@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wordle sin Servidor</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Wordle</h1>
+    <button id="toggle-history" class="button">Ver Historial</button>
+    <button onclick="resetGame()" class="button">Reiniciar</button>
+    <button id="modeToggle" class="button">Modo Diario</button>
+      <div id="history" style="display: none;"></div>  <!-- Oculto por defecto -->
+    <p id="message"></p>
+    <div id="grid"></div>
+    <p id="reveal-word"></p>
+    <div id="keyboard"></div>
+        <script src="script.js"></script>
+</body>
+</html>

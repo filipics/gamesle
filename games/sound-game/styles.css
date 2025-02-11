@@ -1,0 +1,145 @@
+body {
+    font-family: 'Arial', sans-serif;
+    text-align: center;
+    background-color: #121212;
+    color: white;
+}
+
+header {
+    background-color: #1f1f1f;
+    padding: 20px;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+#grid {
+    display: grid;
+    gap: 10px;
+    margin: 20px auto;
+    justify-content: center;
+    background-color: #1f1f1f;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.cell {
+    width: 60px;
+    height: 60px;
+    border: 2px solid white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: bold;
+    text-transform: uppercase;
+    background-color: #2c2c2c;
+    color: white;
+    border-radius: 5px;
+    cursor: text;
+}
+
+.cell.selected {
+    border: 2px solid yellow;
+}
+
+.correct { background-color: #4caf50 !important; color: white !important; }
+.present { background-color: #ffeb3b !important; color: black !important; }
+.absent { background-color: #965050 !important; color: white !important; }
+
+
+#keyboard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 1px;
+    background-color: #1f1f1f;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.keyboard-row {
+    display: flex;
+    justify-content: center;
+    gap: 0px;
+    margin-bottom: 0px;
+}
+
+.key {
+    display: inline-block;
+    width: 50px;
+    height: 60px;   
+    margin: 1px;
+    text-align: center;
+    line-height: 40px;
+    font-size: 24px;
+    font-weight: bold;
+    background-color: #999999;
+    border-radius: 5px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.key-special {
+    width: 80px; /* Enter y Backspace más grandes */
+}
+
+.button {
+    width: 150px;
+    height: 50px;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    line-height: 50px;
+    cursor: pointer;
+    border-radius: 8px;
+    border: none;
+    background-color: #222;
+    color: white;
+    margin: 5px;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+
+/* 📌 Efecto de presionado */
+.button:active {
+    background-color: #555;
+    transform: scale(0.95);
+}
+
+/* 📌 Efecto de hover */
+.button:hover {
+    background-color: #444;
+    transform: scale(1.05);
+}
+
+/* 📌 Media queries para móviles */
+@media (max-width: 600px) {
+    #game-container {
+        width: 95%;
+    }
+
+    .button {
+        width: 130px;
+        height: 45px;
+        font-size: 16px;
+        line-height: 45px;
+    }
+
+    .cell {
+        width: 60px;
+        height: 60px;
+        font-size: 20px;
+        line-height: 40px;
+    }
+
+    .key {
+        width: 40px;
+        height: 50px;
+        font-size: 16px;
+        line-height: 40px;
+    }
+
+    .key-special {
+        width: 60px;
+    }
+}
