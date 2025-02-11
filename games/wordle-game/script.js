@@ -1,12 +1,3 @@
-/************************************************************
- * script.js - Wordle sin Servidor con funcionalidad completa
- * y teclado organizado en tres filas (integrando ambas versiones)
- * 
- * Mejoras:
- * - El juego arranca en modo normal (isDailyMode = false).
- * - Se agrega un botón "Volver al menú principal" (acción a definir).
- ************************************************************/
-
 /* ==================== Variables Globales ==================== */
 let currentRow = 0;
 let currentCol = 0;
