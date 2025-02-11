@@ -37,14 +37,6 @@ h1 {
   transform: scale(0.95);
 }
 
-/* Botón de "Volver al menú principal" posicionado arriba a la izquierda */
-.back-button {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  /* Puedes ajustar tamaño y márgenes si lo requieres */
-}
-
 /* ==================== Contenedor de Historial ==================== */
 #history {
   margin: 10px auto;
