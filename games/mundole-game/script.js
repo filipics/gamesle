@@ -41,6 +41,12 @@ const paises = [
     { name: "South Africa", lat: -30.5595, lon: 22.9375, image: "images/south_africa.png" }
 ];
 
+// Lista de países con coordenadas e imágenes (Debes agregar aquí la lista completa de países)
+const paises = [
+    // { name: "Afghanistan", lat: 33.9391, lon: 67.71, image: "images/afghanistan.png" },
+    // { name: "Argentina", lat: -38.4161, lon: -63.6167, image: "images/argentina.png" },
+    // ... Agrega aquí la lista completa ...
+];
 
 // Seleccionar un país aleatorio al inicio del juego
 let paisSecreto = paises[Math.floor(Math.random() * paises.length)];
@@ -140,3 +146,4 @@ function verificarRespuesta() {
         document.getElementById("feedback").innerText = `📍 Estás a ${Math.round(distancia)} km en dirección ${direccion}. Intento ${intentos}/${maxIntentos}.`;
     }
 }
+
