@@ -12,10 +12,14 @@ document.getElementById('game2').addEventListener('click', () => {
 });
 // Aquí puedes agregar más lógica para otros juegos de la misma manera
 // Ejemplo para el Juego 2:
-document.querySelectorAll('.game-btn').forEach((button, index) => {
-  if (index !== 0) {  // Excluyendo el primer botón (Wordle)
-    button.addEventListener('click', () => {
-      window.location.href = `/games/game${index + 1}/index.html`; // Cambiado a /games
-    });
-  }
+document.querySelectorAll('.game-btn').forEach((button) => {
+  if (!button.id) return; // Evita botones sin ID
+
+  button.addEventListener('click', () => {
+    let gamePath = button.id === "game1" ? "/games/wordle-game/index.html" :
+                   button.id === "game2" ? "/games/mundole-game/index.html" :
+                   `/games/game${button.id.replace('game', '')}/index.html`;
+
+    window.location.href = gamePath;
+  });
 });
