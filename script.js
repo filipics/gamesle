@@ -6,7 +6,7 @@ document.getElementById('statsButton').addEventListener('click', () => {
 // Lógica para redirigir al juego Wordle
 document.getElementById('game1').addEventListener('click', () => {
   window.location.href = '/games/wordle-game/index.html'; // Cambiado a /games
-  
+});  
 document.getElementById('game2').addEventListener('click', () => {
   window.location.href = '/games/mundole-game/index.html'; // Cambiado a /games
 });
