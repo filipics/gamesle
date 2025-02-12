@@ -40,7 +40,9 @@ const paises = [
     { name: "Vietnam", lat: 14.0583, lon: 108.2772, image: "images/vietnam.png" },
     { name: "South Africa", lat: -30.5595, lon: 22.9375, image: "images/south_africa.png" }
 ];
-let paisSecreto, intentos;
+
+
+let paisSecreto, intentos, juegoTerminado;
 const maxIntentos = 5;
 let historialPartidas = [];
 
@@ -48,10 +50,12 @@ let historialPartidas = [];
 function iniciarJuego() {
     paisSecreto = paises[Math.floor(Math.random() * paises.length)];
     intentos = 0;
+    juegoTerminado = false; // Permite jugar nuevamente
     document.getElementById("country-image").src = paisSecreto.image;
     document.getElementById("feedback").innerText = "";
     document.getElementById("tabla-intentos").innerHTML = "";
     document.getElementById("guess").value = "";
+    document.getElementById("guess").placeholder = "Escribir aquí el país";
     document.getElementById("suggestions").innerHTML = "";
 }
 
@@ -103,10 +107,7 @@ function calcularDireccion(lat1, lon1, lat2, lon2) {
 
 // Función para verificar la respuesta del usuario
 function verificarRespuesta() {
-    if (intentos >= maxIntentos) {
-        document.getElementById("feedback").innerText = `❌ GAME OVER. La respuesta correcta era ${paisSecreto.name}.`;
-        return;
-    }
+    if (juegoTerminado) return; // No permite más intentos si el juego terminó
 
     const guess = document.getElementById("guess").value.trim();
     const paisElegido = paises.find(p => p.name.toLowerCase() === guess.toLowerCase());
@@ -120,6 +121,7 @@ function verificarRespuesta() {
 
     if (paisElegido.name === paisSecreto.name) {
         document.getElementById("feedback").innerText = `🎉 ¡Correcto! Adivinaste en ${intentos} intentos.`;
+        juegoTerminado = true; // Bloquea más intentos
         return;
     }
 
@@ -134,9 +136,14 @@ function verificarRespuesta() {
     // Si se agotaron los intentos, mostrar "Game Over"
     if (intentos >= maxIntentos) {
         document.getElementById("feedback").innerText = `❌ GAME OVER. La respuesta correcta era ${paisSecreto.name}.`;
+        juegoTerminado = true; // Bloquea más intentos
     } else {
         document.getElementById("feedback").innerText = `📍 ${Math.round(distancia)} km en dirección ${direccion}. Intento ${intentos}/${maxIntentos}.`;
     }
+
+    // Reiniciar el input
+    document.getElementById("guess").value = "";
+    document.getElementById("guess").placeholder = "Escribir aquí el país";
 }
 
 // Filtrar países al escribir
