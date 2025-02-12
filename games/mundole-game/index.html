@@ -8,19 +8,19 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- jQuery (Necesario para Bootstrap Select) -->
+    <!-- jQuery (Necesario para autocompletado y Bootstrap) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-    <!-- Bootstrap Select CSS (Versión Compatible con Bootstrap 5) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta2/css/bootstrap-select.min.css">
 
     <style>
         body { text-align: center; background-color: #f4f4f4; font-family: Arial, sans-serif; }
-        #country-image { width: 300px; margin: 20px auto; display: block; }
-        #input-container { margin-top: 20px; }
+        #country-image { width: 300px; height: 300px; object-fit: contain; margin: 20px auto; display: block; border: 1px solid #ddd; }
+        #input-container { margin-top: 20px; position: relative; }
+        #guess { width: 100%; padding: 10px; }
+        #suggestions { position: absolute; width: 100%; background: white; border: 1px solid #ddd; max-height: 200px; overflow-y: auto; display: none; }
+        .suggestion-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #ddd; }
+        .suggestion-item:hover { background: #f0f0f0; }
         #feedback { margin-top: 10px; font-weight: bold; }
-        #historial { margin-top: 20px; text-align: center; max-width: 400px; margin-left: auto; margin-right: auto; }
-        #partidas-historial { margin-top: 20px; text-align: center; max-width: 400px; margin-left: auto; margin-right: auto; }
+        #historial, #partidas-historial { margin-top: 20px; text-align: center; max-width: 400px; margin-left: auto; margin-right: auto; }
         table { width: 100%; margin-top: 10px; }
     </style>
 </head>
@@ -31,7 +31,7 @@
 
     <div id="input-container">
         <input type="text" id="guess" class="form-control" placeholder="Escribir aquí el país">
-        <div id="suggestions" class="list-group"></div>
+        <div id="suggestions"></div>
         <button onclick="verificarRespuesta()" class="btn btn-primary mt-2">Enviar</button>
     </div>
 
@@ -47,9 +47,7 @@
                     <th>Dirección</th>
                 </tr>
             </thead>
-            <tbody id="tabla-intentos">
-                <!-- Aquí se agregarán los intentos dinámicamente -->
-            </tbody>
+            <tbody id="tabla-intentos"></tbody>
         </table>
     </div>
 
