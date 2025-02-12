@@ -40,7 +40,6 @@ const paises = [
     { name: "Vietnam", lat: 14.0583, lon: 108.2772, image: "images/vietnam.png" },
     { name: "South Africa", lat: -30.5595, lon: 22.9375, image: "images/south_africa.png" }
 ];
-
 // Seleccionar un país aleatorio al inicio del juego
 let paisSecreto = paises[Math.floor(Math.random() * paises.length)];
 
