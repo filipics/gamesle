@@ -40,110 +40,87 @@ const paises = [
     { name: "Vietnam", lat: 14.0583, lon: 108.2772, image: "images/vietnam.png" },
     { name: "South Africa", lat: -30.5595, lon: 22.9375, image: "images/south_africa.png" }
 ];
+let paisSecreto, intentos;
+const maxIntentos = 5;
+let historialPartidas = [];
 
-// Lista de países con coordenadas e imágenes (Debes agregar aquí la lista completa de países)
-const paises = [
-    // { name: "Afghanistan", lat: 33.9391, lon: 67.71, image: "images/afghanistan.png" },
-    // { name: "Argentina", lat: -38.4161, lon: -63.6167, image: "images/argentina.png" },
-    // ... Agrega aquí la lista completa ...
-];
-
-// Seleccionar un país aleatorio al inicio del juego
-let paisSecreto = paises[Math.floor(Math.random() * paises.length)];
-let intentos = 0; // Contador de intentos
-const maxIntentos = 5; // Máximo de intentos permitidos
-
-// Mostrar la imagen del país secreto
-document.getElementById("country-image").src = paisSecreto.image;
-
-// Llenar el select con opciones de países
-const select = document.getElementById("guess");
-paises.forEach(pais => {
-    let option = document.createElement("option");
-    option.value = pais.name;
-    option.textContent = pais.name;
-    select.appendChild(option);
-});
-
-// Esperar a que el DOM esté listo antes de inicializar Bootstrap Select
-$(document).ready(function() {
-    $('.selectpicker').selectpicker(); // Iniciar Bootstrap Select correctamente
-});
-
-// Función para calcular la distancia entre dos puntos (Fórmula de Haversine)
-function calcularDistancia(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Radio de la Tierra en km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
+// Inicializa el juego
+function iniciarJuego() {
+    paisSecreto = paises[Math.floor(Math.random() * paises.length)];
+    intentos = 0;
+    document.getElementById("country-image").src = paisSecreto.image;
+    document.getElementById("feedback").innerText = "";
+    document.getElementById("tabla-intentos").innerHTML = "";
+    document.getElementById("guess").value = "";
+    document.getElementById("suggestions").innerHTML = "";
 }
 
-// Función para calcular la dirección (N, S, E, O, NE, NO, SE, SO)
-function calcularDireccion(lat1, lon1, lat2, lon2) {
-    const dLat = lat2 - lat1;
-    const dLon = lon2 - lon1;
-
-    if (dLat > 0 && dLon > 0) return "NE";
-    if (dLat > 0 && dLon < 0) return "NO";
-    if (dLat < 0 && dLon > 0) return "SE";
-    if (dLat < 0 && dLon < 0) return "SO";
-    if (dLat > 0) return "N";
-    if (dLat < 0) return "S";
-    if (dLon > 0) return "E";
-    return "O";
+// Reinicia el juego y guarda el historial de partidas
+function reiniciarJuego() {
+    historialPartidas.push(`Partida ${historialPartidas.length + 1}: ${intentos}/${maxIntentos} intentos - ${intentos < maxIntentos ? "Ganaste" : "Perdiste"} (País: ${paisSecreto.name})`);
+    actualizarHistorialPartidas();
+    iniciarJuego();
 }
 
-// Función para actualizar el historial de intentos en la tabla
-function actualizarHistorial(pais, distancia, direccion) {
-    let tabla = document.getElementById("tabla-intentos");
-    let nuevaFila = document.createElement("tr");
-
-    nuevaFila.innerHTML = `
-        <td>${pais}</td>
-        <td>${Math.round(distancia)} km</td>
-        <td>${direccion}</td>
-    `;
-
-    tabla.appendChild(nuevaFila);
+// Muestra el historial de partidas
+function actualizarHistorialPartidas() {
+    let lista = document.getElementById("lista-partidas");
+    lista.innerHTML = "";
+    historialPartidas.forEach(partida => {
+        let item = document.createElement("li");
+        item.classList.add("list-group-item");
+        item.textContent = partida;
+        lista.appendChild(item);
+    });
 }
 
-// Función para verificar la respuesta del usuario
+// Verifica la respuesta del usuario
 function verificarRespuesta() {
-    if (intentos >= maxIntentos) {
-        document.getElementById("feedback").innerText = `❌ GAME OVER. La respuesta correcta era ${paisSecreto.name}.`;
-        return;
-    }
-
-    const guess = document.getElementById("guess").value;
-    const paisElegido = paises.find(p => p.name === guess);
+    const guess = document.getElementById("guess").value.trim();
+    const paisElegido = paises.find(p => p.name.toLowerCase() === guess.toLowerCase());
 
     if (!paisElegido) {
         document.getElementById("feedback").innerText = "País no válido, intenta de nuevo.";
         return;
     }
 
-    intentos++; // Aumentar intentos
+    intentos++;
 
     if (paisElegido.name === paisSecreto.name) {
         document.getElementById("feedback").innerText = `🎉 ¡Correcto! Adivinaste en ${intentos} intentos.`;
         return;
     }
 
-    const distancia = calcularDistancia(paisElegido.lat, paisElegido.lon, paisSecreto.lat, paisSecreto.lon);
-    const direccion = calcularDireccion(paisElegido.lat, paisElegido.lon, paisSecreto.lat, paisSecreto.lon);
-    
-    // Agregar intento al historial
-    actualizarHistorial(paisElegido.name, distancia, direccion);
-
-    // Mostrar mensaje de error si se acabaron los intentos
-    if (intentos >= maxIntentos) {
-        document.getElementById("feedback").innerText = `❌ GAME OVER. La respuesta correcta era ${paisSecreto.name}.`;
-    } else {
-        document.getElementById("feedback").innerText = `📍 Estás a ${Math.round(distancia)} km en dirección ${direccion}. Intento ${intentos}/${maxIntentos}.`;
-    }
+    document.getElementById("feedback").innerText = `❌ GAME OVER. La respuesta correcta era ${paisSecreto.name}.`;
 }
 
+// Filtrar países al escribir
+document.getElementById("guess").addEventListener("input", function() {
+    let filtro = this.value.toLowerCase();
+    let sugerencias = paises.filter(pais => pais.name.toLowerCase().startsWith(filtro));
+
+    let suggestionsDiv = document.getElementById("suggestions");
+    suggestionsDiv.innerHTML = "";
+    
+    if (filtro.length === 0) {
+        suggestionsDiv.style.display = "none";
+        return;
+    }
+
+    sugerencias.forEach(pais => {
+        let div = document.createElement("div");
+        div.classList.add("suggestion-item");
+        div.textContent = pais.name;
+        div.onclick = function() {
+            document.getElementById("guess").value = pais.name;
+            suggestionsDiv.innerHTML = "";
+            suggestionsDiv.style.display = "none";
+        };
+        suggestionsDiv.appendChild(div);
+    });
+
+    suggestionsDiv.style.display = sugerencias.length > 0 ? "block" : "none";
+});
+
+// Iniciar el juego
+iniciarJuego();
