@@ -22,6 +22,18 @@ let paisSecreto = paises[Math.floor(Math.random() * paises.length)];
 // Mostrar la imagen del país secreto
 document.getElementById("country-image").src = paisSecreto.image;
 
+// Llenar el select con opciones de países
+const select = document.getElementById("guess");
+paises.forEach(pais => {
+    let option = document.createElement("option");
+    option.value = pais.name;
+    option.textContent = pais.name;
+    select.appendChild(option);
+});
+
+// Recargar el selectpicker para que funcione con Bootstrap Select
+$('.selectpicker').selectpicker('refresh');
+
 // Función para calcular la distancia entre dos puntos (Fórmula de Haversine)
 function calcularDistancia(lat1, lon1, lat2, lon2) {
     const R = 6371; // Radio de la Tierra en km
@@ -51,8 +63,8 @@ function calcularDireccion(lat1, lon1, lat2, lon2) {
 
 // Función para verificar la respuesta del usuario
 function verificarRespuesta() {
-    const guess = document.getElementById("guess").value.trim();
-    const paisElegido = paises.find(p => p.name.toLowerCase() === guess.toLowerCase());
+    const guess = document.getElementById("guess").value;
+    const paisElegido = paises.find(p => p.name === guess);
 
     if (!paisElegido) {
         document.getElementById("feedback").innerText = "País no válido, intenta de nuevo.";
