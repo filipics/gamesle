@@ -44,6 +44,8 @@ const paises = [
 
 // Seleccionar un país aleatorio al inicio del juego
 let paisSecreto = paises[Math.floor(Math.random() * paises.length)];
+let intentos = 0; // Contador de intentos
+const maxIntentos = 5; // Máximo de intentos permitidos
 
 // Mostrar la imagen del país secreto
 document.getElementById("country-image").src = paisSecreto.image;
@@ -59,7 +61,7 @@ paises.forEach(pais => {
 
 // Esperar a que el DOM esté listo antes de inicializar Bootstrap Select
 $(document).ready(function() {
-    $('.selectpicker').selectpicker('refresh');
+    $('.selectpicker').selectpicker(); // Iniciar Bootstrap Select correctamente
 });
 
 // Función para calcular la distancia entre dos puntos (Fórmula de Haversine)
@@ -89,8 +91,27 @@ function calcularDireccion(lat1, lon1, lat2, lon2) {
     return "O";
 }
 
+// Función para actualizar el historial de intentos en la tabla
+function actualizarHistorial(pais, distancia, direccion) {
+    let tabla = document.getElementById("tabla-intentos");
+    let nuevaFila = document.createElement("tr");
+
+    nuevaFila.innerHTML = `
+        <td>${pais}</td>
+        <td>${Math.round(distancia)} km</td>
+        <td>${direccion}</td>
+    `;
+
+    tabla.appendChild(nuevaFila);
+}
+
 // Función para verificar la respuesta del usuario
 function verificarRespuesta() {
+    if (intentos >= maxIntentos) {
+        document.getElementById("feedback").innerText = `❌ GAME OVER. La respuesta correcta era ${paisSecreto.name}.`;
+        return;
+    }
+
     const guess = document.getElementById("guess").value;
     const paisElegido = paises.find(p => p.name === guess);
 
@@ -99,13 +120,23 @@ function verificarRespuesta() {
         return;
     }
 
+    intentos++; // Aumentar intentos
+
     if (paisElegido.name === paisSecreto.name) {
-        document.getElementById("feedback").innerText = "🎉 ¡Correcto! Has adivinado el país.";
+        document.getElementById("feedback").innerText = `🎉 ¡Correcto! Adivinaste en ${intentos} intentos.`;
         return;
     }
 
     const distancia = calcularDistancia(paisElegido.lat, paisElegido.lon, paisSecreto.lat, paisSecreto.lon);
     const direccion = calcularDireccion(paisElegido.lat, paisElegido.lon, paisSecreto.lat, paisSecreto.lon);
     
-    document.getElementById("feedback").innerText = `📍 Estás a ${Math.round(distancia)} km en dirección ${direccion}.`;
+    // Agregar intento al historial
+    actualizarHistorial(paisElegido.name, distancia, direccion);
+
+    // Mostrar mensaje de error si se acabaron los intentos
+    if (intentos >= maxIntentos) {
+        document.getElementById("feedback").innerText = `❌ GAME OVER. La respuesta correcta era ${paisSecreto.name}.`;
+    } else {
+        document.getElementById("feedback").innerText = `📍 Estás a ${Math.round(distancia)} km en dirección ${direccion}. Intento ${intentos}/${maxIntentos}.`;
+    }
 }
