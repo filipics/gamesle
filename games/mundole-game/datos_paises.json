@@ -1,6 +1,0 @@
-[
-    { "name": "Argentina", "lat": -38.4161, "lon": -63.6167, "image": "images/argentina.png" },
-    { "name": "Brasil", "lat": -14.2350, "lon": -51.9253, "image": "images/brasil.png" },
-    { "name": "Francia", "lat": 46.6034, "lon": 1.8883, "image": "images/francia.png" }
-  ]
-  
