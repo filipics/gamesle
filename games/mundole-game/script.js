@@ -41,7 +41,6 @@ const paises = [
     { name: "South Africa", lat: -30.5595, lon: 22.9375, image: "images/south_africa.png" }
 ];
 
-
 let paisSecreto, intentos, juegoTerminado;
 const maxIntentos = 5;
 let historialPartidas = [];
@@ -50,7 +49,7 @@ let historialPartidas = [];
 function iniciarJuego() {
     paisSecreto = paises[Math.floor(Math.random() * paises.length)];
     intentos = 0;
-    juegoTerminado = false; // Permite jugar nuevamente
+    juegoTerminado = false;
     document.getElementById("country-image").src = paisSecreto.image;
     document.getElementById("feedback").innerText = "";
     document.getElementById("tabla-intentos").innerHTML = "";
@@ -78,19 +77,16 @@ function actualizarHistorialPartidas() {
     });
 }
 
-// Función para calcular la distancia entre dos puntos (Fórmula de Haversine)
+// Calcula la distancia en un mapa plano (proyección planisférica)
 function calcularDistancia(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Radio de la Tierra en km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
+    const escala = 111; // Aproximadamente 111 km por grado de latitud o longitud
+    const dx = (lon2 - lon1) * escala;
+    const dy = (lat2 - lat1) * escala;
+    
+    return Math.sqrt(dx * dx + dy * dy); // Distancia euclidiana en el mapa plano
 }
 
-// Función para calcular la dirección (N, S, E, O, NE, NO, SE, SO)
+// Calcula la dirección relativa
 function calcularDireccion(lat1, lon1, lat2, lon2) {
     const dLat = lat2 - lat1;
     const dLon = lon2 - lon1;
@@ -105,9 +101,9 @@ function calcularDireccion(lat1, lon1, lat2, lon2) {
     return "O";
 }
 
-// Función para verificar la respuesta del usuario
+// Verifica la respuesta del usuario
 function verificarRespuesta() {
-    if (juegoTerminado) return; // No permite más intentos si el juego terminó
+    if (juegoTerminado) return;
 
     const guess = document.getElementById("guess").value.trim();
     const paisElegido = paises.find(p => p.name.toLowerCase() === guess.toLowerCase());
@@ -121,27 +117,24 @@ function verificarRespuesta() {
 
     if (paisElegido.name === paisSecreto.name) {
         document.getElementById("feedback").innerText = `🎉 ¡Correcto! Adivinaste en ${intentos} intentos.`;
-        juegoTerminado = true; // Bloquea más intentos
+        juegoTerminado = true;
         return;
     }
 
     const distancia = calcularDistancia(paisElegido.lat, paisElegido.lon, paisSecreto.lat, paisSecreto.lon);
     const direccion = calcularDireccion(paisElegido.lat, paisElegido.lon, paisSecreto.lat, paisSecreto.lon);
 
-    // Agregar intento al historial
     let fila = document.createElement("tr");
     fila.innerHTML = `<td>${paisElegido.name}</td><td>${Math.round(distancia)} km</td><td>${direccion}</td>`;
     document.getElementById("tabla-intentos").appendChild(fila);
 
-    // Si se agotaron los intentos, mostrar "Game Over"
     if (intentos >= maxIntentos) {
         document.getElementById("feedback").innerText = `❌ GAME OVER. La respuesta correcta era ${paisSecreto.name}.`;
-        juegoTerminado = true; // Bloquea más intentos
+        juegoTerminado = true;
     } else {
         document.getElementById("feedback").innerText = `📍 ${Math.round(distancia)} km en dirección ${direccion}. Intento ${intentos}/${maxIntentos}.`;
     }
 
-    // Reiniciar el input
     document.getElementById("guess").value = "";
     document.getElementById("guess").placeholder = "Escribir aquí el país";
 }
