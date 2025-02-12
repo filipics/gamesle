@@ -74,8 +74,40 @@ function actualizarHistorialPartidas() {
     });
 }
 
-// Verifica la respuesta del usuario
+// Función para calcular la distancia entre dos puntos (Fórmula de Haversine)
+function calcularDistancia(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Radio de la Tierra en km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
+// Función para calcular la dirección (N, S, E, O, NE, NO, SE, SO)
+function calcularDireccion(lat1, lon1, lat2, lon2) {
+    const dLat = lat2 - lat1;
+    const dLon = lon2 - lon1;
+
+    if (dLat > 0 && dLon > 0) return "NE";
+    if (dLat > 0 && dLon < 0) return "NO";
+    if (dLat < 0 && dLon > 0) return "SE";
+    if (dLat < 0 && dLon < 0) return "SO";
+    if (dLat > 0) return "N";
+    if (dLat < 0) return "S";
+    if (dLon > 0) return "E";
+    return "O";
+}
+
+// Función para verificar la respuesta del usuario
 function verificarRespuesta() {
+    if (intentos >= maxIntentos) {
+        document.getElementById("feedback").innerText = `❌ GAME OVER. La respuesta correcta era ${paisSecreto.name}.`;
+        return;
+    }
+
     const guess = document.getElementById("guess").value.trim();
     const paisElegido = paises.find(p => p.name.toLowerCase() === guess.toLowerCase());
 
@@ -91,7 +123,20 @@ function verificarRespuesta() {
         return;
     }
 
-    document.getElementById("feedback").innerText = `❌ GAME OVER. La respuesta correcta era ${paisSecreto.name}.`;
+    const distancia = calcularDistancia(paisElegido.lat, paisElegido.lon, paisSecreto.lat, paisSecreto.lon);
+    const direccion = calcularDireccion(paisElegido.lat, paisElegido.lon, paisSecreto.lat, paisSecreto.lon);
+
+    // Agregar intento al historial
+    let fila = document.createElement("tr");
+    fila.innerHTML = `<td>${paisElegido.name}</td><td>${Math.round(distancia)} km</td><td>${direccion}</td>`;
+    document.getElementById("tabla-intentos").appendChild(fila);
+
+    // Si se agotaron los intentos, mostrar "Game Over"
+    if (intentos >= maxIntentos) {
+        document.getElementById("feedback").innerText = `❌ GAME OVER. La respuesta correcta era ${paisSecreto.name}.`;
+    } else {
+        document.getElementById("feedback").innerText = `📍 ${Math.round(distancia)} km en dirección ${direccion}. Intento ${intentos}/${maxIntentos}.`;
+    }
 }
 
 // Filtrar países al escribir
