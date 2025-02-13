@@ -43,7 +43,7 @@ const paises = [
     { name: "Croatia", lat: 45.1000, lon: 15.2000, image: "images/croatia.png" },
     { name: "Cuba", lat: 21.5218, lon: -77.7812, image: "images/cuba.png" },
     { name: "Cyprus", lat: 35.1264, lon: 33.4299, image: "images/cyprus.png" },
-    { name: "Czech Republic", lat: 49.8175, lon: 15.4720, image: "images/czech_republic.png" }
+    { name: "Czech Republic", lat: 49.8175, lon: 15.4720, image: "images/czech_republic.png" },
     { name: "Democratic Republic of the Congo", lat: -4.0383, lon: 21.7587, image: "images/democratic_republic_of_the_congo.png" },
     { name: "Denmark", lat: 56.2639, lon: 9.5018, image: "images/denmark.png" },
     { name: "Djibouti", lat: 11.8251, lon: 42.5903, image: "images/djibouti.png" },
@@ -59,7 +59,7 @@ const paises = [
     { name: "Ethiopia", lat: 9.1450, lon: 40.4897, image: "images/ethiopia.png" },
     { name: "Fiji", lat: -17.7134, lon: 178.0650, image: "images/fiji.png" },
     { name: "Finland", lat: 61.9241, lon: 25.7482, image: "images/finland.png" },
-    { name: "France", lat: 46.6034, lon: 1.8883, image: "images/france.png" }
+    { name: "France", lat: 46.6034, lon: 1.8883, image: "images/france.png" },
     { name: "Gabon", lat: -0.8037, lon: 11.6094, image: "images/gabon.png" },
     { name: "Gambia", lat: 13.4432, lon: -15.3101, image: "images/gambia.png" },
     { name: "Georgia", lat: 42.3154, lon: 43.3569, image: "images/georgia.png" },
