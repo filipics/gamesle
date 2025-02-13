@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <a href="../../index.html" class="btn btn-primary back-btn">Volver al Menú Principal</a>
     <title>Worldle</title>
 
     <!-- Bootstrap CSS -->
@@ -28,13 +27,14 @@
 </head>
 <body>
 
+    <a href="../../index.html" class="btn btn-primary back-btn mt-3">Volver al Menú Principal</a>
     <h1>Worldle - Adivina el País</h1>
     <img id="country-image" src="" alt="Silueta del país">
 
     <div id="input-container">
         <input type="text" id="guess" class="form-control" placeholder="Escribir aquí el país">
         <div id="suggestions"></div>
-        <button onclick="verificarRespuesta()" class="btn btn-primary mt-2">Enviar</button>
+        <button id="enviar-intento" class="btn btn-primary mt-2">Enviar</button>
     </div>
 
     <p id="feedback"></p>
@@ -53,7 +53,7 @@
         </table>
     </div>
 
-    <button onclick="reiniciarJuego()" class="btn btn-danger mt-3">Reiniciar Juego</button>
+    <button id="reiniciar" class="btn btn-danger mt-3">Reiniciar Juego</button>
 
     <div id="partidas-historial">
         <h3>Historial de Partidas</h3>
