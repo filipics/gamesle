@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adivina la Bandera</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Adivina la Bandera</h1>
+    <p id="country-name">País: Argentina</p>
+    <div id="flag-container">
+        <!-- Bandera con áreas para pintar -->
+        <div class="flag-section" data-color="celeste"></div>
+        <div class="flag-section" data-color="blanco"></div>
+        <div class="flag-section" data-color="celeste"></div>
+        <div class="flag-section" data-color="amarillo"></div> <!-- Para el sol -->
+    </div>
+    <p>Errores: <span id="errors">0</span>/5</p>
+    <div id="color-palette"></div>
+    <button id="reset-btn">Reiniciar</button>
+    <script src="script.js"></script>
+</body>
+</html>
