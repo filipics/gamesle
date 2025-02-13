@@ -197,117 +197,138 @@ const paises = [
     
 ];
 
-const intentosMaximos = 5;
-let intentos = 0;
-let historialIntentos = [];
-let historialPartidas = [];
-let paisSecreto;
 
-// Función para verificar si la imagen existe
-function imagenExiste(url) {
-    return new Promise((resolve) => {
-        let img = new Image();
-        img.onload = () => resolve(true);
-        img.onerror = () => resolve(false);
-        img.src = url;
+let paisSecreto, intentos, juegoTerminado;
+const maxIntentos = 5;
+let historialPartidas = [];
+
+// Inicializa el juego
+function iniciarJuego() {
+    paisSecreto = paises[Math.floor(Math.random() * paises.length)];
+    intentos = 0;
+    juegoTerminado = false;
+    document.getElementById("country-image").src = paisSecreto.image;
+    document.getElementById("feedback").innerText = "";
+    document.getElementById("tabla-intentos").innerHTML = "";
+    document.getElementById("guess").value = "";
+    document.getElementById("guess").placeholder = "Escribir aquí el país";
+    document.getElementById("suggestions").innerHTML = "";
+}
+
+// Reinicia el juego y guarda el historial de partidas
+function reiniciarJuego() {
+    historialPartidas.push(`Partida ${historialPartidas.length + 1}: ${intentos}/${maxIntentos} intentos - ${intentos < maxIntentos ? "Ganaste" : "Perdiste"} (País: ${paisSecreto.name})`);
+    actualizarHistorialPartidas();
+    iniciarJuego();
+}
+
+// Muestra el historial de partidas
+function actualizarHistorialPartidas() {
+    let lista = document.getElementById("lista-partidas");
+    lista.innerHTML = "";
+    historialPartidas.forEach(partida => {
+        let item = document.createElement("li");
+        item.classList.add("list-group-item");
+        item.textContent = partida;
+        lista.appendChild(item);
     });
 }
 
-// Función para elegir un país asegurándose de que tenga imagen
-async function elegirPaisSecreto() {
-    let paisConImagen;
-    do {
-        paisConImagen = paises[Math.floor(Math.random() * paises.length)];
-    } while (!(await imagenExiste(paisConImagen.image))); // Verifica que la imagen existe antes de seleccionarlo
-
-    return paisConImagen;
-}
-
-// Función para iniciar un nuevo juego
-async function iniciarJuego() {
-    intentos = 0;
-    historialIntentos = [];
-    actualizarHistorial();
-    paisSecreto = await elegirPaisSecreto(); // Espera a que se seleccione un país con imagen válida
-    document.getElementById("country-image").src = paisSecreto.image;
-    document.getElementById("feedback").textContent = "";
-    document.getElementById("guess").value = "";
-}
-
-// Función para calcular la distancia entre dos coordenadas en un planisferio
+// Calcula la distancia en un mapa plano (proyección planisférica)
 function calcularDistancia(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Radio de la Tierra en km
-    const dLat = (lat2 - lat1) * (Math.PI / 180);
-    const dLon = (lon2 - lon1) * (Math.PI / 180);
-    const a = Math.sin(dLat / 2) ** 2 +
-              Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-              Math.sin(dLon / 2) ** 2;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
+    const escala = 111; // Aproximadamente 111 km por grado de latitud o longitud
+    const dx = (lon2 - lon1) * escala;
+    const dy = (lat2 - lat1) * escala;
+    
+    return Math.sqrt(dx * dx + dy * dy); // Distancia euclidiana en el mapa plano
 }
 
-// Función para calcular la dirección
+// Calcula la dirección relativa con ajuste de 20° en N, S, E, O
 function calcularDireccion(lat1, lon1, lat2, lon2) {
-    let dLat = lat2 - lat1;
-    let dLon = lon2 - lon1;
-    let angulo = Math.atan2(dLon, dLat) * (180 / Math.PI);
-    if (angulo < 0) angulo += 360;
+    const dx = lon2 - lon1;
+    const dy = lat2 - lat1;
 
-    if (angulo >= 337.5 || angulo < 22.5) return "N";
-    if (angulo >= 22.5 && angulo < 67.5) return "NE";
-    if (angulo >= 67.5 && angulo < 112.5) return "E";
-    if (angulo >= 112.5 && angulo < 157.5) return "SE";
-    if (angulo >= 157.5 && angulo < 202.5) return "S";
-    if (angulo >= 202.5 && angulo < 247.5) return "SO";
-    if (angulo >= 247.5 && angulo < 292.5) return "O";
-    return "NO";
+    // Calcula el ángulo en grados
+    const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+    if ((angle >= -20 && angle <= 20) || (angle >= 160 && angle <= 200)) return "E";
+    if ((angle >= 70 && angle <= 110) || (angle >= 250 && angle <= 290)) return "N";
+    if ((angle >= -110 && angle <= -70) || (angle >= 110 && angle <= 160)) return "O";
+    if ((angle >= -290 && angle <= -250) || (angle >= -70 && angle <= -20)) return "S";
+
+    if (angle > 0 && angle < 70) return "NE";
+    if (angle > 110 && angle < 160) return "NO";
+    if (angle < -110 && angle > -160) return "SO";
+    if (angle < -70 && angle > -20) return "SE";
+
+    return "N"; // Default si no entra en ninguna
 }
 
-// Función para manejar un intento del jugador
-function realizarIntento() {
-    if (intentos >= intentosMaximos) return;
+// Verifica la respuesta del usuario
+function verificarRespuesta() {
+    if (juegoTerminado) return;
 
-    let paisIntento = document.getElementById("guess").value;
-    let paisEncontrado = paises.find(pais => pais.name.toLowerCase() === paisIntento.toLowerCase());
+    const guess = document.getElementById("guess").value.trim();
+    const paisElegido = paises.find(p => p.name.toLowerCase() === guess.toLowerCase());
 
-    if (!paisEncontrado) {
-        document.getElementById("feedback").textContent = "País no encontrado. Intenta de nuevo.";
+    if (!paisElegido) {
+        document.getElementById("feedback").innerText = "País no válido, intenta de nuevo.";
         return;
     }
 
     intentos++;
-    let distancia = calcularDistancia(paisEncontrado.lat, paisEncontrado.lon, paisSecreto.lat, paisSecreto.lon);
-    let direccion = calcularDireccion(paisEncontrado.lat, paisEncontrado.lon, paisSecreto.lat, paisSecreto.lon);
 
-    historialIntentos.push({ nombre: paisIntento, distancia: Math.round(distancia), direccion });
-
-    actualizarHistorial();
-
-    if (paisIntento.toLowerCase() === paisSecreto.name.toLowerCase()) {
-        document.getElementById("feedback").textContent = `¡Correcto! Has encontrado ${paisSecreto.name} en ${intentos} intentos.`;
-        bloquearEntradas();
-    } else if (intentos >= intentosMaximos) {
-        document.getElementById("feedback").textContent = `Game Over. El país correcto era ${paisSecreto.name}.`;
-        bloquearEntradas();
+    if (paisElegido.name === paisSecreto.name) {
+        document.getElementById("feedback").innerText = `🎉 ¡Correcto! Adivinaste en ${intentos} intentos.`;
+        juegoTerminado = true;
+        return;
     }
+
+    const distancia = calcularDistancia(paisElegido.lat, paisElegido.lon, paisSecreto.lat, paisSecreto.lon);
+    const direccion = calcularDireccion(paisElegido.lat, paisElegido.lon, paisSecreto.lat, paisSecreto.lon);
+
+    let fila = document.createElement("tr");
+    fila.innerHTML = `<td>${paisElegido.name}</td><td>${Math.round(distancia)} km</td><td>${direccion}</td>`;
+    document.getElementById("tabla-intentos").appendChild(fila);
+
+    if (intentos >= maxIntentos) {
+        document.getElementById("feedback").innerText = `❌ GAME OVER. El país secreto era ${paisSecreto.name}.`;
+        juegoTerminado = true;
+    } else {
+        document.getElementById("feedback").innerText = `📍 El país secreto está a ${Math.round(distancia)} km al ${direccion} de ${paisElegido.name}. Intento ${intentos}/${maxIntentos}.`;
+    }
+
+    document.getElementById("guess").value = "";
+    document.getElementById("guess").placeholder = "Escribir aquí el país";
 }
 
-// Bloquear input después de ganar/perder
-function bloquearEntradas() {
-    document.getElementById("guess").disabled = true;
-    document.getElementById("enviar-intento").disabled = true;
-}
+// Filtrar países al escribir
+document.getElementById("guess").addEventListener("input", function() {
+    let filtro = this.value.toLowerCase();
+    let sugerencias = paises.filter(pais => pais.name.toLowerCase().startsWith(filtro));
 
-// Reiniciar juego
-function reiniciarJuego() {
-    document.getElementById("guess").disabled = false;
-    document.getElementById("enviar-intento").disabled = false;
-    iniciarJuego();
-}
+    let suggestionsDiv = document.getElementById("suggestions");
+    suggestionsDiv.innerHTML = "";
+    
+    if (filtro.length === 0) {
+        suggestionsDiv.style.display = "none";
+        return;
+    }
 
-// Eventos
-document.getElementById("enviar-intento").addEventListener("click", realizarIntento);
-document.getElementById("reiniciar").addEventListener("click", reiniciarJuego);
+    sugerencias.forEach(pais => {
+        let div = document.createElement("div");
+        div.classList.add("suggestion-item");
+        div.textContent = pais.name;
+        div.onclick = function() {
+            document.getElementById("guess").value = pais.name;
+            suggestionsDiv.innerHTML = "";
+            suggestionsDiv.style.display = "none";
+        };
+        suggestionsDiv.appendChild(div);
+    });
 
-// Iniciar el juego al cargar
+    suggestionsDiv.style.display = sugerencias.length > 0 ? "block" : "none";
+});
+
+// Iniciar el juego
 iniciarJuego();
