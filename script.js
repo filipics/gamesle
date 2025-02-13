@@ -10,6 +10,9 @@ document.getElementById('game1').addEventListener('click', () => {
 document.getElementById('game2').addEventListener('click', () => {
   window.location.href = '/games/mundole-game/index.html'; // Cambiado a /games
 });
+document.getElementById('game3').addEventListener('click', () => {
+  window.location.href = '/games/Banderas-game/index.html'; // Cambiado a /games
+});
 // Aquí puedes agregar más lógica para otros juegos de la misma manera
 // Ejemplo para el Juego 2:
 document.querySelectorAll('.game-btn').forEach((button) => {
@@ -18,6 +21,7 @@ document.querySelectorAll('.game-btn').forEach((button) => {
   button.addEventListener('click', () => {
     let gamePath = button.id === "game1" ? "/games/wordle-game/index.html" :
                    button.id === "game2" ? "/games/mundole-game/index.html" :
+                   button.id === "game3" ? "/games/Banderas-game/index.html" :
                    `/games/game${button.id.replace('game', '')}/index.html`;
 
     window.location.href = gamePath;
