@@ -197,7 +197,7 @@ const paises = [
     
 ];
 
-let paisSecreto, intentos, juegoTerminado;
+let intentos, juegoTerminado;
 const maxIntentos = 5;
 let historialPartidas = [];
 
