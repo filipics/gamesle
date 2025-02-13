@@ -227,11 +227,13 @@ async function elegirPaisSecreto() {
 async function iniciarJuego() {
     intentos = 0;
     historialIntentos = [];
-    actualizarHistorial(); // Asegurar que esta función existe
+    actualizarHistorial();
     paisSecreto = await elegirPaisSecreto(); // Espera a que se seleccione un país con imagen válida
     document.getElementById("country-image").src = paisSecreto.image;
     document.getElementById("feedback").textContent = "";
     document.getElementById("guess").value = "";
+    document.getElementById("guess").disabled = false;
+    document.getElementById("enviar-intento").disabled = false;
 }
 
 // Función para calcular la distancia entre dos coordenadas en un planisferio
@@ -283,6 +285,8 @@ function realizarIntento() {
 
     actualizarHistorial();
 
+    document.getElementById("feedback").textContent = `${paisIntento} está a ${Math.round(distancia)} km al ${direccion} del país secreto.`;
+
     if (paisIntento.toLowerCase() === paisSecreto.name.toLowerCase()) {
         document.getElementById("feedback").textContent = `¡Correcto! Has encontrado ${paisSecreto.name} en ${intentos} intentos.`;
         bloquearEntradas();
@@ -306,13 +310,6 @@ function actualizarHistorial() {
         let row = `<tr><td>${intent.nombre}</td><td>${intent.distancia} km</td><td>${intent.direccion}</td></tr>`;
         tablaIntentos.innerHTML += row;
     });
-
-    let listaPartidas = document.getElementById("lista-partidas");
-    listaPartidas.innerHTML = "";
-    historialPartidas.forEach(partida => {
-        let listItem = `<li class="list-group-item">${partida}</li>`;
-        listaPartidas.innerHTML += listItem;
-    });
 }
 
 // Función para reiniciar el juego
@@ -321,6 +318,33 @@ function reiniciarJuego() {
     document.getElementById("enviar-intento").disabled = false;
     iniciarJuego();
 }
+
+// Autocompletar lista de países
+document.getElementById("guess").addEventListener("input", function () {
+    let input = this.value.toLowerCase();
+    let suggestions = document.getElementById("suggestions");
+    suggestions.innerHTML = "";
+    
+    if (input.length === 0) {
+        suggestions.style.display = "none";
+        return;
+    }
+
+    let coincidencias = paises.filter(pais => pais.name.toLowerCase().startsWith(input));
+
+    coincidencias.forEach(pais => {
+        let div = document.createElement("div");
+        div.classList.add("suggestion-item");
+        div.textContent = pais.name;
+        div.onclick = function () {
+            document.getElementById("guess").value = pais.name;
+            suggestions.style.display = "none";
+        };
+        suggestions.appendChild(div);
+    });
+
+    suggestions.style.display = coincidencias.length > 0 ? "block" : "none";
+});
 
 // Eventos
 document.getElementById("enviar-intento").addEventListener("click", realizarIntento);
