@@ -86,19 +86,25 @@ function calcularDistancia(lat1, lon1, lat2, lon2) {
     return Math.sqrt(dx * dx + dy * dy); // Distancia euclidiana en el mapa plano
 }
 
-// Calcula la dirección relativa
+// Calcula la dirección relativa con ajuste de 20° en N, S, E, O
 function calcularDireccion(lat1, lon1, lat2, lon2) {
-    const dLat = lat2 - lat1;
-    const dLon = lon2 - lon1;
+    const dx = lon2 - lon1;
+    const dy = lat2 - lat1;
 
-    if (dLat > 0 && dLon > 0) return "NE";
-    if (dLat > 0 && dLon < 0) return "NO";
-    if (dLat < 0 && dLon > 0) return "SE";
-    if (dLat < 0 && dLon < 0) return "SO";
-    if (dLat > 0) return "N";
-    if (dLat < 0) return "S";
-    if (dLon > 0) return "E";
-    return "O";
+    // Calcula el ángulo en grados
+    const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+    if ((angle >= -20 && angle <= 20) || (angle >= 160 && angle <= 200)) return "E";
+    if ((angle >= 70 && angle <= 110) || (angle >= 250 && angle <= 290)) return "N";
+    if ((angle >= -110 && angle <= -70) || (angle >= 110 && angle <= 160)) return "O";
+    if ((angle >= -290 && angle <= -250) || (angle >= -70 && angle <= -20)) return "S";
+
+    if (angle > 0 && angle < 70) return "NE";
+    if (angle > 110 && angle < 160) return "NO";
+    if (angle < -110 && angle > -160) return "SO";
+    if (angle < -70 && angle > -20) return "SE";
+
+    return "N"; // Default si no entra en ninguna
 }
 
 // Verifica la respuesta del usuario
@@ -129,10 +135,10 @@ function verificarRespuesta() {
     document.getElementById("tabla-intentos").appendChild(fila);
 
     if (intentos >= maxIntentos) {
-        document.getElementById("feedback").innerText = `❌ GAME OVER. La respuesta correcta era ${paisSecreto.name}.`;
+        document.getElementById("feedback").innerText = `❌ GAME OVER. El país secreto era ${paisSecreto.name}.`;
         juegoTerminado = true;
     } else {
-        document.getElementById("feedback").innerText = `📍 ${Math.round(distancia)} km en dirección ${direccion}. Intento ${intentos}/${maxIntentos}.`;
+        document.getElementById("feedback").innerText = `📍 El país secreto está a ${Math.round(distancia)} km al ${direccion} de ${paisElegido.name}. Intento ${intentos}/${maxIntentos}.`;
     }
 
     document.getElementById("guess").value = "";
