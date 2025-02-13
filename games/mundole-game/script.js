@@ -230,8 +230,8 @@ async function iniciarJuego() {
     actualizarHistorial();
     paisSecreto = await elegirPaisSecreto(); // Espera a que se seleccione un país con imagen válida
     document.getElementById("country-image").src = paisSecreto.image;
-    document.getElementById("resultado").textContent = "";
-    document.getElementById("pais-input").value = "";
+    document.getElementById("feedback").textContent = "";
+    document.getElementById("guess").value = "";
 }
 
 // Función para calcular la distancia entre dos coordenadas en un planisferio
@@ -239,18 +239,17 @@ function calcularDistancia(lat1, lon1, lat2, lon2) {
     const R = 6371; // Radio de la Tierra en km
     const dLat = (lat2 - lat1) * (Math.PI / 180);
     const dLon = (lon2 - lon1) * (Math.PI / 180);
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    const a = Math.sin(dLat / 2) ** 2 +
               Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+              Math.sin(dLon / 2) ** 2;
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
 }
 
-// Función para calcular la dirección del país secreto desde el intento
+// Función para calcular la dirección
 function calcularDireccion(lat1, lon1, lat2, lon2) {
     let dLat = lat2 - lat1;
     let dLon = lon2 - lon1;
-
     let angulo = Math.atan2(dLon, dLat) * (180 / Math.PI);
     if (angulo < 0) angulo += 360;
 
@@ -268,11 +267,11 @@ function calcularDireccion(lat1, lon1, lat2, lon2) {
 function realizarIntento() {
     if (intentos >= intentosMaximos) return;
 
-    let paisIntento = document.getElementById("pais-input").value;
+    let paisIntento = document.getElementById("guess").value;
     let paisEncontrado = paises.find(pais => pais.name.toLowerCase() === paisIntento.toLowerCase());
 
     if (!paisEncontrado) {
-        document.getElementById("resultado").textContent = "País no encontrado. Intenta de nuevo.";
+        document.getElementById("feedback").textContent = "País no encontrado. Intenta de nuevo.";
         return;
     }
 
@@ -285,51 +284,30 @@ function realizarIntento() {
     actualizarHistorial();
 
     if (paisIntento.toLowerCase() === paisSecreto.name.toLowerCase()) {
-        document.getElementById("resultado").textContent = `¡Correcto! Has encontrado ${paisSecreto.name} en ${intentos} intentos.`;
-        historialPartidas.push(`Ganaste en ${intentos} intentos con ${paisSecreto.name}`);
+        document.getElementById("feedback").textContent = `¡Correcto! Has encontrado ${paisSecreto.name} en ${intentos} intentos.`;
         bloquearEntradas();
     } else if (intentos >= intentosMaximos) {
-        document.getElementById("resultado").textContent = `Game Over. El país correcto era ${paisSecreto.name}.`;
-        historialPartidas.push(`Perdiste. El país era ${paisSecreto.name}`);
+        document.getElementById("feedback").textContent = `Game Over. El país correcto era ${paisSecreto.name}.`;
         bloquearEntradas();
     }
 }
 
-// Función para bloquear el input después de ganar o perder
+// Bloquear input después de ganar/perder
 function bloquearEntradas() {
-    document.getElementById("pais-input").disabled = true;
+    document.getElementById("guess").disabled = true;
     document.getElementById("enviar-intento").disabled = true;
 }
 
-// Función para actualizar el historial de intentos
-function actualizarHistorial() {
-    let historialDiv = document.getElementById("historial-intentos");
-    historialDiv.innerHTML = "";
-    historialIntentos.forEach(intent => {
-        let intentoElemento = document.createElement("p");
-        intentoElemento.textContent = `${intent.nombre} - ${intent.distancia}km - ${intent.direccion}`;
-        historialDiv.appendChild(intentoElemento);
-    });
-
-    let partidasDiv = document.getElementById("historial-partidas");
-    partidasDiv.innerHTML = "";
-    historialPartidas.forEach(partida => {
-        let partidaElemento = document.createElement("p");
-        partidaElemento.textContent = partida;
-        partidasDiv.appendChild(partidaElemento);
-    });
-}
-
-// Función para reiniciar el juego
+// Reiniciar juego
 function reiniciarJuego() {
-    document.getElementById("pais-input").disabled = false;
+    document.getElementById("guess").disabled = false;
     document.getElementById("enviar-intento").disabled = false;
     iniciarJuego();
 }
 
-// Asignar eventos a los botones
+// Eventos
 document.getElementById("enviar-intento").addEventListener("click", realizarIntento);
 document.getElementById("reiniciar").addEventListener("click", reiniciarJuego);
 
-// Iniciar el juego al cargar la página
+// Iniciar el juego al cargar
 iniciarJuego();
