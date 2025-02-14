@@ -242,6 +242,30 @@ function cargarEstadoDiario() {
     return false;
 }
 
+// 📌 Función para actualizar el historial de intentos en la tabla
+function actualizarHistorialIntentos() {
+    let tablaIntentos = document.getElementById("tabla-intentos");
+    if (!tablaIntentos) return;
+
+    tablaIntentos.innerHTML = "";
+    historialIntentos.forEach(intent => {
+        let row = `<tr><td>${intent.nombre}</td><td>${intent.distancia} km</td><td>${intent.direccion}</td></tr>`;
+        tablaIntentos.innerHTML += row;
+    });
+}
+
+// 📌 Función para actualizar el historial de partidas en la lista
+function actualizarHistorialPartidas() {
+    let listaPartidas = document.getElementById("lista-partidas");
+    if (!listaPartidas) return;
+
+    listaPartidas.innerHTML = "";
+    historialPartidas.forEach(partida => {
+        let listItem = `<li class="list-group-item">${partida}</li>`;
+        listaPartidas.innerHTML += listItem;
+    });
+}
+
 // 📌 Función para verificar si la imagen existe
 function imagenExiste(url) {
     return new Promise((resolve) => {
@@ -347,14 +371,8 @@ function realizarIntento() {
 
     document.getElementById("feedback").textContent = `El país secreto está a ${Math.round(distancia)} km al ${direccion} de ${paisIntento}.`;
 
-    document.getElementById("guess").value = "";
-    document.getElementById("guess").placeholder = "Escribe aquí el país";
-
     if (paisIntento.toLowerCase() === paisSecreto.name.toLowerCase()) {
         document.getElementById("feedback").textContent = `¡Correcto! Has encontrado ${paisSecreto.name} en ${intentos} intentos.`;
-        bloquearEntradas();
-    } else if (intentos >= intentosMaximos) {
-        document.getElementById("feedback").textContent = `Game Over. El país correcto era ${paisSecreto.name}.`;
         bloquearEntradas();
     }
 }
