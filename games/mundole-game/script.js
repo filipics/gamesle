@@ -232,6 +232,7 @@ async function iniciarJuego() {
     document.getElementById("country-image").src = paisSecreto.image;
     document.getElementById("feedback").textContent = "";
     document.getElementById("guess").value = "";
+    document.getElementById("guess").placeholder = "Escribe aquí el país";
     document.getElementById("guess").disabled = false;
     document.getElementById("enviar-intento").disabled = false;
 }
@@ -248,21 +249,21 @@ function calcularDistancia(lat1, lon1, lat2, lon2) {
     return R * c;
 }
 
-// Función para calcular la dirección
+// ✅ Corrección: Función para calcular la dirección (invertida correctamente)
 function calcularDireccion(lat1, lon1, lat2, lon2) {
-    let dLat = lat2 - lat1;
-    let dLon = lon2 - lon1;
+    let dLat = lat1 - lat2; // Se invierte el cálculo
+    let dLon = lon1 - lon2; // Se invierte el cálculo
     let angulo = Math.atan2(dLon, dLat) * (180 / Math.PI);
     if (angulo < 0) angulo += 360;
 
-    if (angulo >= 337.5 || angulo < 22.5) return "N";
-    if (angulo >= 22.5 && angulo < 67.5) return "NE";
-    if (angulo >= 67.5 && angulo < 112.5) return "E";
-    if (angulo >= 112.5 && angulo < 157.5) return "SE";
-    if (angulo >= 157.5 && angulo < 202.5) return "S";
-    if (angulo >= 202.5 && angulo < 247.5) return "SO";
-    if (angulo >= 247.5 && angulo < 292.5) return "O";
-    return "NO";
+    if (angulo >= 337.5 || angulo < 22.5) return "S";
+    if (angulo >= 22.5 && angulo < 67.5) return "SO";
+    if (angulo >= 67.5 && angulo < 112.5) return "O";
+    if (angulo >= 112.5 && angulo < 157.5) return "NO";
+    if (angulo >= 157.5 && angulo < 202.5) return "N";
+    if (angulo >= 202.5 && angulo < 247.5) return "NE";
+    if (angulo >= 247.5 && angulo < 292.5) return "E";
+    return "SE";
 }
 
 // Función para manejar un intento del jugador
@@ -286,6 +287,10 @@ function realizarIntento() {
     actualizarHistorial();
 
     document.getElementById("feedback").textContent = `${paisIntento} está a ${Math.round(distancia)} km al ${direccion} del país secreto.`;
+
+    // ✅ Borrar el input después de cada intento y restaurar placeholder
+    document.getElementById("guess").value = "";
+    document.getElementById("guess").placeholder = "Escribe aquí el país";
 
     if (paisIntento.toLowerCase() === paisSecreto.name.toLowerCase()) {
         document.getElementById("feedback").textContent = `¡Correcto! Has encontrado ${paisSecreto.name} en ${intentos} intentos.`;
@@ -352,3 +357,4 @@ document.getElementById("reiniciar").addEventListener("click", reiniciarJuego);
 
 // Iniciar el juego al cargar
 iniciarJuego();
+
