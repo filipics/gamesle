@@ -228,7 +228,7 @@ async function iniciarJuego() {
     intentos = 0;
     historialIntentos = [];
     actualizarHistorial();
-    paisSecreto = await elegirPaisSecreto(); // Espera a que se seleccione un país con imagen válida
+    paisSecreto = await elegirPaisSecreto();
     document.getElementById("country-image").src = paisSecreto.image;
     document.getElementById("feedback").textContent = "";
     document.getElementById("guess").value = "";
@@ -239,7 +239,7 @@ async function iniciarJuego() {
 
 // Función para calcular la distancia entre dos coordenadas en un planisferio
 function calcularDistancia(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Radio de la Tierra en km
+    const R = 6371;
     const dLat = (lat2 - lat1) * (Math.PI / 180);
     const dLon = (lon2 - lon1) * (Math.PI / 180);
     const a = Math.sin(dLat / 2) ** 2 +
@@ -249,20 +249,21 @@ function calcularDistancia(lat1, lon1, lat2, lon2) {
     return R * c;
 }
 
-// ✅ Corrección: Función para calcular la dirección (invertida correctamente)
+// ✅ Corrección: Función para calcular la dirección con tolerancia de 10 grados
 function calcularDireccion(lat1, lon1, lat2, lon2) {
-    let dLat = lat1 - lat2; // Se invierte el cálculo
-    let dLon = lon1 - lon2; // Se invierte el cálculo
+    let dLat = lat1 - lat2;
+    let dLon = lon1 - lon2;
     let angulo = Math.atan2(dLon, dLat) * (180 / Math.PI);
     if (angulo < 0) angulo += 360;
 
-    if (angulo >= 337.5 || angulo < 22.5) return "S";
-    if (angulo >= 22.5 && angulo < 67.5) return "SO";
-    if (angulo >= 67.5 && angulo < 112.5) return "O";
-    if (angulo >= 112.5 && angulo < 157.5) return "NO";
-    if (angulo >= 157.5 && angulo < 202.5) return "N";
-    if (angulo >= 202.5 && angulo < 247.5) return "NE";
-    if (angulo >= 247.5 && angulo < 292.5) return "E";
+    if (angulo >= 350 || angulo < 10) return "S";
+    if (angulo >= 80 && angulo < 100) return "O";
+    if (angulo >= 170 && angulo < 190) return "N";
+    if (angulo >= 260 && angulo < 280) return "E";
+
+    if (angulo >= 10 && angulo < 80) return "SO";
+    if (angulo >= 100 && angulo < 170) return "NO";
+    if (angulo >= 190 && angulo < 260) return "NE";
     return "SE";
 }
 
@@ -286,10 +287,8 @@ function realizarIntento() {
 
     actualizarHistorial();
 
-    // ✅ Cambié el mensaje para incluir la dirección y el país intentado
     document.getElementById("feedback").textContent = `El país secreto está a ${Math.round(distancia)} km al ${direccion} de ${paisIntento}.`;
 
-    // ✅ Borrar el input después de cada intento y restaurar placeholder
     document.getElementById("guess").value = "";
     document.getElementById("guess").placeholder = "Escribe aquí el país";
 
