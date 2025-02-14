@@ -218,59 +218,24 @@ function guardarHistorialPartidas() {
     localStorage.setItem("historialPartidas", JSON.stringify(historialPartidas));
 }
 
-// 📌 Guardar el estado del Modo Diario
-function guardarEstadoDiario() {
-    if (isDailyMode) {
-        const dailyGameState = {
-            intentos,
-            historialIntentos,
-            pais: paisSecreto.name,
-            resultado: intentos < intentosMaximos ? `Ganaste en ${intentos} intentos` : "Perdiste",
-            lastPlayedDate: new Date().toDateString(),
-        };
-        localStorage.setItem("dailyGameState", JSON.stringify(dailyGameState));
-    }
-}
-
-// 📌 Cargar el estado del Modo Diario
-function cargarEstadoDiario() {
-    const savedGame = JSON.parse(localStorage.getItem("dailyGameState"));
-    if (savedGame && savedGame.lastPlayedDate === new Date().toDateString()) {
-        intentos = savedGame.intentos;
-        historialIntentos = savedGame.historialIntentos || [];
-        paisSecreto = paises.find(pais => pais.name === savedGame.pais);
-        actualizarHistorialIntentos();
-
-        document.getElementById("feedback").textContent = `Modo Diario: Ya jugaste hoy. El país era ${savedGame.pais}. ${savedGame.resultado}.`;
-        document.getElementById("country-image").src = paisSecreto.image;
-        bloquearEntradas();
-        return true;
-    }
-    return false;
-}
-
-// 📌 Función para actualizar el historial de intentos en la tabla
-function actualizarHistorialIntentos() {
-    let tablaIntentos = document.getElementById("tabla-intentos");
-    if (!tablaIntentos) return;
-
-    tablaIntentos.innerHTML = "";
-    historialIntentos.forEach(intent => {
-        let row = `<tr><td>${intent.nombre}</td><td>${intent.distancia} km</td><td>${intent.direccion}</td></tr>`;
-        tablaIntentos.innerHTML += row;
+// 📌 Función para verificar si la imagen existe
+function imagenExiste(url) {
+    return new Promise((resolve) => {
+        let img = new Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = url;
     });
 }
 
-// 📌 Función para actualizar el historial de partidas en la lista
-function actualizarHistorialPartidas() {
-    let listaPartidas = document.getElementById("lista-partidas");
-    if (!listaPartidas) return;
+// 📌 Función para elegir un país aleatorio asegurándose de que tenga imagen
+async function elegirPaisSecreto() {
+    let paisConImagen;
+    do {
+        paisConImagen = paises[Math.floor(Math.random() * paises.length)];
+    } while (!(await imagenExiste(paisConImagen.image))); 
 
-    listaPartidas.innerHTML = "";
-    historialPartidas.forEach(partida => {
-        let listItem = `<li class="list-group-item">${partida}</li>`;
-        listaPartidas.innerHTML += listItem;
-    });
+    return paisConImagen;
 }
 
 // 📌 Función para obtener el país del Modo Diario basado en la fecha
@@ -290,7 +255,7 @@ async function iniciarJuego() {
         paisSecreto = obtenerPaisDiario();
         if (cargarEstadoDiario()) return;
     } else {
-        paisSecreto = await elegirPaisSecreto();
+        paisSecreto = await elegirPaisSecreto();  // ✅ Ahora esta función está definida y no dará error
     }
 
     document.getElementById("country-image").src = paisSecreto.image;
@@ -300,75 +265,6 @@ async function iniciarJuego() {
     document.getElementById("guess").disabled = false;
     document.getElementById("enviar-intento").disabled = false;
 }
-
-// 📌 Función para manejar un intento del jugador
-function realizarIntento() {
-    if (intentos >= intentosMaximos) return;
-
-    let paisIntento = document.getElementById("guess").value;
-    let paisEncontrado = paises.find(pais => pais.name.toLowerCase() === paisIntento.toLowerCase());
-
-    if (!paisEncontrado) {
-        document.getElementById("feedback").textContent = "País no encontrado. Intenta de nuevo.";
-        return;
-    }
-
-    intentos++;
-    let distancia = calcularDistancia(paisEncontrado.lat, paisEncontrado.lon, paisSecreto.lat, paisSecreto.lon);
-    let direccion = calcularDireccion(paisEncontrado.lat, paisIntento.lon, paisSecreto.lat, paisSecreto.lon);
-
-    historialIntentos.push({ nombre: paisIntento, distancia: Math.round(distancia), direccion });
-
-    actualizarHistorialIntentos();
-    guardarEstadoDiario();
-
-    document.getElementById("feedback").textContent = `El país secreto está a ${Math.round(distancia)} km al ${direccion} de ${paisIntento}.`;
-
-    if (paisIntento.toLowerCase() === paisSecreto.name.toLowerCase()) {
-        document.getElementById("feedback").textContent = `¡Correcto! Has encontrado ${paisSecreto.name} en ${intentos} intentos.`;
-        bloquearEntradas();
-    }
-}
-
-// 📌 Función para bloquear entradas después de jugar el Modo Diario
-function bloquearEntradas() {
-    document.getElementById("guess").disabled = true;
-    document.getElementById("enviar-intento").disabled = true;
-}
-
-// 📌 Alternar entre Modo Diario y Modo Normal
-function alternarModo() {
-    isDailyMode = !isDailyMode;
-    document.getElementById("modo-juego").textContent = isDailyMode ? "Modo Diario" : "Modo Normal";
-    iniciarJuego();
-}
-
-// 📌 Autocompletar lista de países
-document.getElementById("guess").addEventListener("input", function () {
-    let input = this.value.toLowerCase();
-    let suggestions = document.getElementById("suggestions");
-    suggestions.innerHTML = "";
-    
-    if (input.length === 0) {
-        suggestions.style.display = "none";
-        return;
-    }
-
-    let coincidencias = paises.filter(pais => pais.name.toLowerCase().startsWith(input));
-
-    coincidencias.forEach(pais => {
-        let div = document.createElement("div");
-        div.classList.add("suggestion-item");
-        div.textContent = pais.name;
-        div.onclick = function () {
-            document.getElementById("guess").value = pais.name;
-            suggestions.style.display = "none";
-        };
-        suggestions.appendChild(div);
-    });
-
-    suggestions.style.display = coincidencias.length > 0 ? "block" : "none";
-});
 
 // 📌 Eventos
 document.getElementById("modo-juego").addEventListener("click", alternarModo);
