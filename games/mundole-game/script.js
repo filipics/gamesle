@@ -204,21 +204,7 @@ let historialPartidas = [];
 let paisSecreto;
 let isDailyMode = false; // Estado del modo de juego
 
-// ✅ Función para actualizar el historial de intentos en la tabla
-function actualizarHistorialIntentos() {
-    let tablaIntentos = document.getElementById("tabla-intentos");
-    if (!tablaIntentos) return;
-
-    tablaIntentos.innerHTML = "";
-    historialIntentos.forEach(intent => {
-        let row = `<tr><td>${intent.nombre}</td><td>${intent.distancia} km</td><td>${intent.direccion}</td></tr>`;
-        tablaIntentos.innerHTML += row;
-    });
-}
-
-
-
-// Cargar historial de partidas desde localStorage
+// 📌 Cargar historial de partidas desde localStorage
 function cargarHistorialPartidas() {
     const partidasGuardadas = localStorage.getItem("historialPartidas");
     if (partidasGuardadas) {
@@ -227,12 +213,12 @@ function cargarHistorialPartidas() {
     }
 }
 
-// Guardar historial de partidas en localStorage
+// 📌 Guardar historial de partidas en localStorage
 function guardarHistorialPartidas() {
     localStorage.setItem("historialPartidas", JSON.stringify(historialPartidas));
 }
 
-// Guardar el estado del Modo Diario
+// 📌 Guardar el estado del Modo Diario
 function guardarEstadoDiario() {
     if (isDailyMode) {
         const dailyGameState = {
@@ -244,7 +230,7 @@ function guardarEstadoDiario() {
     }
 }
 
-// Cargar el estado del Modo Diario
+// 📌 Cargar el estado del Modo Diario
 function cargarEstadoDiario() {
     const savedGame = JSON.parse(localStorage.getItem("dailyGameState"));
     if (savedGame && savedGame.lastPlayedDate === new Date().toDateString()) {
@@ -256,7 +242,7 @@ function cargarEstadoDiario() {
     return false;
 }
 
-// Función para verificar si la imagen existe
+// 📌 Función para verificar si la imagen existe
 function imagenExiste(url) {
     return new Promise((resolve) => {
         let img = new Image();
@@ -266,24 +252,24 @@ function imagenExiste(url) {
     });
 }
 
-// Función para elegir un país asegurándose de que tenga imagen
+// 📌 Función para elegir un país asegurándose de que tenga imagen
 async function elegirPaisSecreto() {
     let paisConImagen;
     do {
         paisConImagen = paises[Math.floor(Math.random() * paises.length)];
-    } while (!(await imagenExiste(paisConImagen.image))); // Verifica que la imagen existe antes de seleccionarlo
+    } while (!(await imagenExiste(paisConImagen.image))); 
 
     return paisConImagen;
 }
 
-// Función para obtener el país del Modo Diario basado en la fecha
+// 📌 Función para obtener el país del Modo Diario basado en la fecha
 function obtenerPaisDiario() {
     const today = new Date();
     const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
     return paises[seed % paises.length];
 }
 
-// Función para iniciar un nuevo juego
+// 📌 Función para iniciar un nuevo juego
 async function iniciarJuego() {
     intentos = 0;
     historialIntentos = [];
@@ -308,7 +294,7 @@ async function iniciarJuego() {
     document.getElementById("enviar-intento").disabled = false;
 }
 
-// Función para calcular la distancia entre dos coordenadas en un planisferio
+// 📌 Función para calcular la distancia
 function calcularDistancia(lat1, lon1, lat2, lon2) {
     const R = 6371;
     const dLat = (lat2 - lat1) * (Math.PI / 180);
@@ -320,7 +306,7 @@ function calcularDistancia(lat1, lon1, lat2, lon2) {
     return R * c;
 }
 
-// Función para calcular la dirección con tolerancia de 10 grados
+// 📌 Función para calcular la dirección (con tolerancia de 10 grados)
 function calcularDireccion(lat1, lon1, lat2, lon2) {
     let dLat = lat1 - lat2;
     let dLon = lon1 - lon2;
@@ -338,7 +324,7 @@ function calcularDireccion(lat1, lon1, lat2, lon2) {
     return "SE";
 }
 
-// Función para manejar un intento del jugador
+// 📌 Función para manejar un intento del jugador
 function realizarIntento() {
     if (intentos >= intentosMaximos) return;
 
@@ -366,31 +352,30 @@ function realizarIntento() {
 
     if (paisIntento.toLowerCase() === paisSecreto.name.toLowerCase()) {
         document.getElementById("feedback").textContent = `¡Correcto! Has encontrado ${paisSecreto.name} en ${intentos} intentos.`;
-        historialPartidas.push(`✅ Ganaste en ${intentos} intentos con ${paisSecreto.name}`);
-        guardarHistorialPartidas();
-        actualizarHistorialPartidas();
         bloquearEntradas();
     } else if (intentos >= intentosMaximos) {
         document.getElementById("feedback").textContent = `Game Over. El país correcto era ${paisSecreto.name}.`;
-        historialPartidas.push(`❌ Perdiste. El país era ${paisSecreto.name}`);
-        guardarHistorialPartidas();
-        actualizarHistorialPartidas();
         bloquearEntradas();
     }
 }
 
-// Alternar entre Modo Diario y Modo Normal
+// 📌 Función para bloquear entradas
+function bloquearEntradas() {
+    document.getElementById("guess").disabled = true;
+    document.getElementById("enviar-intento").disabled = true;
+}
+
+// 📌 Alternar entre Modo Diario y Modo Normal
 function alternarModo() {
     isDailyMode = !isDailyMode;
     document.getElementById("modo-juego").textContent = isDailyMode ? "Modo Diario" : "Modo Normal";
     iniciarJuego();
 }
 
-// Eventos
-document.getElementById("enviar-intento").addEventListener("click", realizarIntento);
-document.getElementById("reiniciar").addEventListener("click", iniciarJuego);
+// 📌 Eventos
 document.getElementById("modo-juego").addEventListener("click", alternarModo);
+document.getElementById("enviar-intento").addEventListener("click", realizarIntento);
 
-// Cargar historial y estado del modo diario
+// 📌 Cargar historial y estado del modo diario
 cargarHistorialPartidas();
 iniciarJuego();
