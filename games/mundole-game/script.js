@@ -217,24 +217,28 @@ function guardarHistorialPartidas() {
     localStorage.setItem("historialPartidas", JSON.stringify(historialPartidas));
 }
 
-// 📌 Función para verificar si la imagen existe
-function imagenExiste(url) {
-    return new Promise((resolve) => {
-        let img = new Image();
-        img.onload = () => resolve(true);
-        img.onerror = () => resolve(false);
-        img.src = url;
+// 📌 Función para actualizar el historial de intentos en la tabla
+function actualizarHistorialIntentos() {
+    let tablaIntentos = document.getElementById("tabla-intentos");
+    if (!tablaIntentos) return;
+
+    tablaIntentos.innerHTML = "";
+    historialIntentos.forEach(intent => {
+        let row = `<tr><td>${intent.nombre}</td><td>${intent.distancia} km</td><td>${intent.direccion}</td></tr>`;
+        tablaIntentos.innerHTML += row;
     });
 }
 
-// 📌 Función para elegir un país aleatorio asegurándose de que tenga imagen
-async function elegirPaisSecreto() {
-    let paisConImagen;
-    do {
-        paisConImagen = paises[Math.floor(Math.random() * paises.length)];
-    } while (!(await imagenExiste(paisConImagen.image))); 
+// 📌 Función para actualizar el historial de partidas en la lista
+function actualizarHistorialPartidas() {
+    let listaPartidas = document.getElementById("lista-partidas");
+    if (!listaPartidas) return;
 
-    return paisConImagen;
+    listaPartidas.innerHTML = "";
+    historialPartidas.forEach(partida => {
+        let listItem = `<li class="list-group-item">${partida}</li>`;
+        listaPartidas.innerHTML += listItem;
+    });
 }
 
 // 📌 Función para obtener el país del Modo Diario basado en la fecha
@@ -254,7 +258,7 @@ async function iniciarJuego() {
         paisSecreto = obtenerPaisDiario();
         if (cargarEstadoDiario()) return;
     } else {
-        paisSecreto = await elegirPaisSecreto(); 
+        paisSecreto = await elegirPaisSecreto();
     }
 
     document.getElementById("country-image").src = paisSecreto.image;
