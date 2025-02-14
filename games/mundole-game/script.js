@@ -196,7 +196,6 @@ const paises = [
     { name: "Zimbabwe", lat: -19.0154, lon: 29.1549, image: "images/zimbabwe.png" },
     
 ];
-
 const intentosMaximos = 5;
 let intentos = 0;
 let historialIntentos = [];
@@ -266,11 +265,49 @@ async function iniciarJuego() {
     document.getElementById("enviar-intento").disabled = false;
 }
 
+// 📌 Función para manejar un intento del jugador
+function realizarIntento() {
+    if (intentos >= intentosMaximos) return;
+
+    let paisIntento = document.getElementById("guess").value;
+    let paisEncontrado = paises.find(pais => pais.name.toLowerCase() === paisIntento.toLowerCase());
+
+    if (!paisEncontrado) {
+        document.getElementById("feedback").textContent = "País no encontrado. Intenta de nuevo.";
+        return;
+    }
+
+    intentos++;
+    let distancia = calcularDistancia(paisEncontrado.lat, paisEncontrado.lon, paisSecreto.lat, paisSecreto.lon);
+    let direccion = calcularDireccion(paisIntento.lat, paisIntento.lon, paisSecreto.lat, paisSecreto.lon);
+
+    historialIntentos.push({ nombre: paisIntento, distancia: Math.round(distancia), direccion });
+
+    actualizarHistorialIntentos();
+    guardarEstadoDiario();
+
+    document.getElementById("feedback").textContent = `El país secreto está a ${Math.round(distancia)} km al ${direccion} de ${paisIntento}.`;
+
+    if (paisIntento.toLowerCase() === paisSecreto.name.toLowerCase()) {
+        document.getElementById("feedback").textContent = `¡Correcto! Has encontrado ${paisSecreto.name} en ${intentos} intentos.`;
+        bloquearEntradas();
+    } else if (intentos >= intentosMaximos) {
+        document.getElementById("feedback").textContent = `Game Over. El país correcto era ${paisSecreto.name}.`;
+        bloquearEntradas();
+    }
+}
+
 // 📌 Función para alternar entre Modo Diario y Modo Normal
 function alternarModo() {
     isDailyMode = !isDailyMode;
     document.getElementById("modo-juego").textContent = isDailyMode ? "Modo Diario" : "Modo Normal";
     iniciarJuego();
+}
+
+// 📌 Función para bloquear entradas después de jugar el Modo Diario
+function bloquearEntradas() {
+    document.getElementById("guess").disabled = true;
+    document.getElementById("enviar-intento").disabled = true;
 }
 
 // 📌 Eventos
