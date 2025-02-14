@@ -286,7 +286,8 @@ function realizarIntento() {
 
     actualizarHistorial();
 
-    document.getElementById("feedback").textContent = `${paisIntento} está a ${Math.round(distancia)} km al ${direccion} del país secreto.`;
+    // ✅ Cambié el mensaje para incluir la dirección y el país intentado
+    document.getElementById("feedback").textContent = `El país secreto está a ${Math.round(distancia)} km al ${direccion} de ${paisIntento}.`;
 
     // ✅ Borrar el input después de cada intento y restaurar placeholder
     document.getElementById("guess").value = "";
@@ -357,4 +358,3 @@ document.getElementById("reiniciar").addEventListener("click", reiniciarJuego);
 
 // Iniciar el juego al cargar
 iniciarJuego();
-
