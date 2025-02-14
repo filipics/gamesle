@@ -204,6 +204,20 @@ let historialPartidas = [];
 let paisSecreto;
 let isDailyMode = false; // Estado del modo de juego
 
+// ✅ Función para actualizar el historial de intentos en la tabla
+function actualizarHistorialIntentos() {
+    let tablaIntentos = document.getElementById("tabla-intentos");
+    if (!tablaIntentos) return;
+
+    tablaIntentos.innerHTML = "";
+    historialIntentos.forEach(intent => {
+        let row = `<tr><td>${intent.nombre}</td><td>${intent.distancia} km</td><td>${intent.direccion}</td></tr>`;
+        tablaIntentos.innerHTML += row;
+    });
+}
+
+
+
 // Cargar historial de partidas desde localStorage
 function cargarHistorialPartidas() {
     const partidasGuardadas = localStorage.getItem("historialPartidas");
