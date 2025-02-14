@@ -203,6 +203,20 @@ let historialIntentos = [];
 let historialPartidas = [];
 let paisSecreto;
 
+// Cargar historial de partidas desde localStorage
+function cargarHistorialPartidas() {
+    const partidasGuardadas = localStorage.getItem("historialPartidas");
+    if (partidasGuardadas) {
+        historialPartidas = JSON.parse(partidasGuardadas);
+        actualizarHistorialPartidas();
+    }
+}
+
+// Guardar historial de partidas en localStorage
+function guardarHistorialPartidas() {
+    localStorage.setItem("historialPartidas", JSON.stringify(historialPartidas));
+}
+
 // Función para verificar si la imagen existe
 function imagenExiste(url) {
     return new Promise((resolve) => {
@@ -227,7 +241,7 @@ async function elegirPaisSecreto() {
 async function iniciarJuego() {
     intentos = 0;
     historialIntentos = [];
-    actualizarHistorial();
+    actualizarHistorialIntentos();
     paisSecreto = await elegirPaisSecreto();
     document.getElementById("country-image").src = paisSecreto.image;
     document.getElementById("feedback").textContent = "";
@@ -285,7 +299,7 @@ function realizarIntento() {
 
     historialIntentos.push({ nombre: paisIntento, distancia: Math.round(distancia), direccion });
 
-    actualizarHistorial();
+    actualizarHistorialIntentos();
 
     document.getElementById("feedback").textContent = `El país secreto está a ${Math.round(distancia)} km al ${direccion} de ${paisIntento}.`;
 
@@ -294,9 +308,15 @@ function realizarIntento() {
 
     if (paisIntento.toLowerCase() === paisSecreto.name.toLowerCase()) {
         document.getElementById("feedback").textContent = `¡Correcto! Has encontrado ${paisSecreto.name} en ${intentos} intentos.`;
+        historialPartidas.push(`✅ Ganaste en ${intentos} intentos con ${paisSecreto.name}`);
+        guardarHistorialPartidas();
+        actualizarHistorialPartidas();
         bloquearEntradas();
     } else if (intentos >= intentosMaximos) {
         document.getElementById("feedback").textContent = `Game Over. El país correcto era ${paisSecreto.name}.`;
+        historialPartidas.push(`❌ Perdiste. El país era ${paisSecreto.name}`);
+        guardarHistorialPartidas();
+        actualizarHistorialPartidas();
         bloquearEntradas();
     }
 }
@@ -307,13 +327,23 @@ function bloquearEntradas() {
     document.getElementById("enviar-intento").disabled = true;
 }
 
-// Función para actualizar el historial de intentos y partidas
-function actualizarHistorial() {
+// Función para actualizar el historial de intentos
+function actualizarHistorialIntentos() {
     let tablaIntentos = document.getElementById("tabla-intentos");
     tablaIntentos.innerHTML = "";
     historialIntentos.forEach(intent => {
         let row = `<tr><td>${intent.nombre}</td><td>${intent.distancia} km</td><td>${intent.direccion}</td></tr>`;
         tablaIntentos.innerHTML += row;
+    });
+}
+
+// Función para actualizar el historial de partidas
+function actualizarHistorialPartidas() {
+    let listaPartidas = document.getElementById("lista-partidas");
+    listaPartidas.innerHTML = "";
+    historialPartidas.forEach(partida => {
+        let listItem = `<li class="list-group-item">${partida}</li>`;
+        listaPartidas.innerHTML += listItem;
     });
 }
 
@@ -354,6 +384,9 @@ document.getElementById("guess").addEventListener("input", function () {
 // Eventos
 document.getElementById("enviar-intento").addEventListener("click", realizarIntento);
 document.getElementById("reiniciar").addEventListener("click", reiniciarJuego);
+
+// Cargar historial al inicio
+cargarHistorialPartidas();
 
 // Iniciar el juego al cargar
 iniciarJuego();
