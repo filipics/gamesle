@@ -196,6 +196,8 @@ const paises = [
     { name: "Zimbabwe", lat: -19.0154, lon: 29.1549, image: "images/zimbabwe.png" },
     
 ];
+
+
 const intentosMaximos = 5;
 let intentos = 0;
 let historialIntentos = [];
