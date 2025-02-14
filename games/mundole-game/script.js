@@ -255,7 +255,7 @@ async function iniciarJuego() {
         paisSecreto = obtenerPaisDiario();
         if (cargarEstadoDiario()) return;
     } else {
-        paisSecreto = await elegirPaisSecreto();  // ✅ Ahora esta función está definida y no dará error
+        paisSecreto = await elegirPaisSecreto(); 
     }
 
     document.getElementById("country-image").src = paisSecreto.image;
@@ -266,10 +266,17 @@ async function iniciarJuego() {
     document.getElementById("enviar-intento").disabled = false;
 }
 
-// 📌 Eventos
-document.getElementById("modo-juego").addEventListener("click", alternarModo);
-document.getElementById("enviar-intento").addEventListener("click", realizarIntento);
+// 📌 Función para alternar entre Modo Diario y Modo Normal
+function alternarModo() {
+    isDailyMode = !isDailyMode;
+    document.getElementById("modo-juego").textContent = isDailyMode ? "Modo Diario" : "Modo Normal";
+    iniciarJuego();
+}
 
-// 📌 Cargar historial y estado del modo diario
-cargarHistorialPartidas();
-iniciarJuego();
+// 📌 Eventos
+document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("modo-juego").addEventListener("click", alternarModo);
+    document.getElementById("enviar-intento").addEventListener("click", realizarIntento);
+    cargarHistorialPartidas();
+    iniciarJuego();
+});
