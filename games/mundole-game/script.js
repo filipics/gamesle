@@ -204,6 +204,15 @@ let historialIntentos = [];
 let historialPartidas = [];
 let paisSecreto;
 let isDailyMode = false; // Cambia a true para iniciar en modo diario
+let gameOver = false; // Variable global para saber si el juego terminó
+
+
+function bloquearEntradas() {
+    document.getElementById("guess").disabled = true;
+    document.getElementById("enviar-intento").disabled = true;
+    gameOver = true; // Marcamos que el juego terminó
+}
+
 
 function hashCode(str) {
   let hash = 0;
@@ -375,7 +384,8 @@ function calcularDireccion(lat1, lon1, lat2, lon2) {
 
 // Función para manejar un intento del jugador
 function realizarIntento() {
-    if (intentos >= intentosMaximos) return;
+    // Si el juego ya terminó, no procesamos más intentos
+    if (gameOver) return;
 
     let paisIntento = document.getElementById("guess").value.trim();
     if (paisIntento === "") {
@@ -410,7 +420,6 @@ function realizarIntento() {
     document.getElementById("guess").value = "";
     document.getElementById("guess").placeholder = "Escribe aquí el país";
 
-    // Guardamos el estado actualizado en modo diario
     if (isDailyMode) {
         saveDailyGameState();
     }
@@ -421,8 +430,6 @@ function realizarIntento() {
         guardarHistorialPartidas();
         actualizarHistorialPartidas();
         bloquearEntradas();
-
-        // Guardamos también el estado final en modo diario
         if (isDailyMode) {
             saveDailyGameState();
         }
@@ -432,8 +439,6 @@ function realizarIntento() {
         guardarHistorialPartidas();
         actualizarHistorialPartidas();
         bloquearEntradas();
-
-        // Guardamos el estado final en modo diario
         if (isDailyMode) {
             saveDailyGameState();
         }
