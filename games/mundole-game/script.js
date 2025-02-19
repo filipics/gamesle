@@ -214,6 +214,44 @@ function hashCode(str) {
 }
 
 
+function loadDailyGameState() {
+  const savedState = localStorage.getItem("dailyGameState");
+  if (savedState) {
+    const state = JSON.parse(savedState);
+    // Verificamos que la fecha guardada sea la de hoy
+    if (state.lastDailyDate === new Date().toDateString()) {
+      intentos = state.intentos;
+      historialIntentos = state.historialIntentos;
+      paisSecreto = state.paisSecreto; // Asegúrate de que se guarde como objeto (por JSON)
+      document.getElementById("country-image").src = paisSecreto.image;
+      document.getElementById("feedback").textContent = state.feedback || "";
+      // Actualizamos el historial de intentos en la UI
+      actualizarHistorialIntentos();
+      // Si el juego ya terminó, bloqueamos las entradas
+      if (state.gameOver) {
+        bloquearEntradas();
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+
+function saveDailyGameState() {
+  // Creamos un objeto con el estado actual
+  const state = {
+    intentos: intentos,
+    historialIntentos: historialIntentos,
+    paisSecreto: paisSecreto,
+    feedback: document.getElementById("feedback").textContent,
+    gameOver: document.getElementById("guess").disabled && document.getElementById("enviar-intento").disabled,
+    lastDailyDate: new Date().toDateString()
+  };
+  localStorage.setItem("dailyGameState", JSON.stringify(state));
+}
+
+
 // Cargar historial de partidas desde localStorage
 function cargarHistorialPartidas() {
     const partidasGuardadas = localStorage.getItem("historialPartidas");
@@ -271,21 +309,29 @@ async function iniciarJuego() {
   intentos = 0;
   historialIntentos = [];
   actualizarHistorialIntentos();
-  paisSecreto = await elegirPaisSecreto();
-  document.getElementById("country-image").src = paisSecreto.image;
-  document.getElementById("feedback").textContent = "";
-  document.getElementById("guess").value = "";
+  
+  // Si estamos en modo diario, intentamos cargar el estado guardado
+  if (isDailyMode && loadDailyGameState()) {
+    // Ya se cargó el estado y se mostrará en la UI, no se reinicia el juego.
+  } else {
+    // Si no es modo diario o no hay estado guardado, se selecciona un país nuevo.
+    paisSecreto = await elegirPaisSecreto();
+    document.getElementById("country-image").src = paisSecreto.image;
+    document.getElementById("feedback").textContent = "";
+    document.getElementById("guess").value = "";
+  }
   document.getElementById("guess").placeholder = "Escribe aquí el país";
   document.getElementById("guess").disabled = false;
   document.getElementById("enviar-intento").disabled = false;
   
-  // Si es modo diario, deshabilitamos el botón de reiniciar
+  // Si es modo diario, deshabilitamos el botón de reiniciar para evitar que se juegue más de una vez
   if (isDailyMode) {
     document.getElementById("reiniciar").disabled = true;
   } else {
     document.getElementById("reiniciar").disabled = false;
   }
 }
+
 
 
 // Proyección de Mercator: convierte latitud y longitud (en grados)
@@ -338,24 +384,36 @@ function realizarIntento() {
     }
 
     let paisEncontrado = paises.find(pais => pais.name.toLowerCase() === paisIntento.toLowerCase());
-
     if (!paisEncontrado) {
         document.getElementById("feedback").textContent = "País no encontrado. Intenta de nuevo.";
         return;
     }
 
     intentos++;
-    // Usamos la nueva función para calcular la distancia en el planisferio
-    let distancia = calcularDistanciaPlanisferio(paisEncontrado.lat, paisEncontrado.lon, paisSecreto.lat, paisSecreto.lon);
-    let direccion = calcularDireccion(paisEncontrado.lat, paisEncontrado.lon, paisSecreto.lat, paisSecreto.lon);
+    let distancia = calcularDistanciaPlanisferio(
+      paisEncontrado.lat, paisEncontrado.lon, 
+      paisSecreto.lat, paisSecreto.lon
+    );
+    let direccion = calcularDireccion(
+      paisEncontrado.lat, paisEncontrado.lon, 
+      paisSecreto.lat, paisSecreto.lon
+    );
 
-    historialIntentos.push({ nombre: paisIntento, distancia: Math.round(distancia), direccion });
+    historialIntentos.push({ 
+      nombre: paisIntento, 
+      distancia: Math.round(distancia), 
+      direccion 
+    });
     actualizarHistorialIntentos();
 
     document.getElementById("feedback").textContent = `El país secreto está a ${Math.round(distancia)} km al ${direccion} de ${paisIntento}. Te quedan ${intentosMaximos - intentos} intentos.`;
-
     document.getElementById("guess").value = "";
     document.getElementById("guess").placeholder = "Escribe aquí el país";
+
+    // Guardamos el estado actualizado en modo diario
+    if (isDailyMode) {
+        saveDailyGameState();
+    }
 
     if (paisIntento.toLowerCase() === paisSecreto.name.toLowerCase()) {
         document.getElementById("feedback").textContent = `¡Correcto! Has encontrado ${paisSecreto.name} en ${intentos} intentos.`;
@@ -363,12 +421,22 @@ function realizarIntento() {
         guardarHistorialPartidas();
         actualizarHistorialPartidas();
         bloquearEntradas();
+
+        // Guardamos también el estado final en modo diario
+        if (isDailyMode) {
+            saveDailyGameState();
+        }
     } else if (intentos >= intentosMaximos) {
         document.getElementById("feedback").textContent = `Game Over. El país correcto era ${paisSecreto.name}.`;
         historialPartidas.push(`❌ Perdiste. El país era ${paisSecreto.name}`);
         guardarHistorialPartidas();
         actualizarHistorialPartidas();
         bloquearEntradas();
+
+        // Guardamos el estado final en modo diario
+        if (isDailyMode) {
+            saveDailyGameState();
+        }
     }
 }
 
@@ -445,9 +513,10 @@ document.getElementById("reiniciar").addEventListener("click", reiniciarJuego);
 document.getElementById("modo-juego").addEventListener("click", function () {
   isDailyMode = !isDailyMode;
   this.textContent = isDailyMode ? "Modo Diario" : "Modo Normal";
-  // Al cambiar de modo se inicia un nuevo juego
+  // Al cambiar de modo se inicia o carga el juego correspondiente
   iniciarJuego();
 });
+
 
 // Cargar historial al inicio
 cargarHistorialPartidas();
