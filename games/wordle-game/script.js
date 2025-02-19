@@ -17503,16 +17503,22 @@ function shareResult() {
     showMessage("Termina el juego para compartir el resultado.");
     return;
   }
-  
+
   const today = new Date();
   const day = today.getDate();
   const monthNames = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
   const month = monthNames[today.getMonth()];
   const year = today.getFullYear().toString().substr(-2);
-  const dateStr = `${day}-${month}-${year}`;
+  
+  let shareText = "";
+  if (isDailyMode) {
+    const dateStr = `${day}-${month}-${year}`;
+    shareText = `Wordle (Gamesle) del dia ${dateStr}:\n`;
+  } else {
+    shareText = "Wordle (Gamesle) random modo normal:\n";
+  }
 
-  let shareText = `Wordle (Gamesle) del dia ${dateStr}:\n`;
-
+  // Determinar cuántas filas se comparten (la fila actual si el juego terminó)
   const rowsToShare = gameOver ? currentRow + 1 : currentRow;
   const cells = document.querySelectorAll(".cell");
   for (let row = 0; row < rowsToShare; row++) {
@@ -17535,14 +17541,29 @@ function shareResult() {
 
   shareText += "\nhttps://gamesle.netlify.app/";
 
-  navigator.clipboard.writeText(shareText)
-    .then(() => {
-      showMessage("¡Resultado copiado al portapapeles!");
+  // Si es móvil, usamos WhatsApp, si no, usamos la API de Web Share o copiamos al portapapeles
+  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    const whatsappUrl = "whatsapp://send?text=" + encodeURIComponent(shareText);
+    window.open(whatsappUrl, "_blank");
+  } else if (navigator.share) {
+    navigator.share({
+      title: "Wordle (Gamesle)",
+      text: shareText,
+      url: "https://gamesle.netlify.app/"
     })
-    .catch(() => {
-      showMessage("Error al copiar el resultado.");
-    });
+      .then(() => console.log("Compartido exitosamente"))
+      .catch(error => console.log("Error al compartir", error));
+  } else {
+    navigator.clipboard.writeText(shareText)
+      .then(() => {
+        showMessage("¡Resultado copiado al portapapeles!");
+      })
+      .catch(() => {
+        showMessage("Error al copiar el resultado.");
+      });
+  }
 }
+
 
 
 
