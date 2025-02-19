@@ -203,6 +203,16 @@ let intentos = 0;
 let historialIntentos = [];
 let historialPartidas = [];
 let paisSecreto;
+let isDailyMode = false; // Cambia a true para iniciar en modo diario
+
+function hashCode(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return hash;
+}
+
 
 // Cargar historial de partidas desde localStorage
 function cargarHistorialPartidas() {
@@ -230,27 +240,53 @@ function imagenExiste(url) {
 
 // Función para elegir un país asegurándose de que tenga imagen
 async function elegirPaisSecreto() {
+  if (isDailyMode) {
+    const todayDate = new Date().toDateString();
+    const savedDailyCountry = localStorage.getItem("dailyCountry");
+    const savedDailyDate = localStorage.getItem("lastDailyDate");
+
+    if (savedDailyCountry && savedDailyDate === todayDate) {
+      return JSON.parse(savedDailyCountry);
+    } else {
+      // Determinísticamente se elige un país:
+      let index = Math.abs(hashCode(todayDate)) % paises.length;
+      let chosenCountry = paises[index];
+      localStorage.setItem("dailyCountry", JSON.stringify(chosenCountry));
+      localStorage.setItem("lastDailyDate", todayDate);
+      return chosenCountry;
+    }
+  } else {
+    // Modo normal: se elige un país al azar que tenga imagen
     let paisConImagen;
     do {
-        paisConImagen = paises[Math.floor(Math.random() * paises.length)];
-    } while (!(await imagenExiste(paisConImagen.image))); // Verifica que la imagen existe antes de seleccionarlo
-
+      paisConImagen = paises[Math.floor(Math.random() * paises.length)];
+    } while (!(await imagenExiste(paisConImagen.image)));
     return paisConImagen;
+  }
 }
+
 
 // Función para iniciar un nuevo juego
 async function iniciarJuego() {
-    intentos = 0;
-    historialIntentos = [];
-    actualizarHistorialIntentos();
-    paisSecreto = await elegirPaisSecreto();
-    document.getElementById("country-image").src = paisSecreto.image;
-    document.getElementById("feedback").textContent = "";
-    document.getElementById("guess").value = "";
-    document.getElementById("guess").placeholder = "Escribe aquí el país";
-    document.getElementById("guess").disabled = false;
-    document.getElementById("enviar-intento").disabled = false;
+  intentos = 0;
+  historialIntentos = [];
+  actualizarHistorialIntentos();
+  paisSecreto = await elegirPaisSecreto();
+  document.getElementById("country-image").src = paisSecreto.image;
+  document.getElementById("feedback").textContent = "";
+  document.getElementById("guess").value = "";
+  document.getElementById("guess").placeholder = "Escribe aquí el país";
+  document.getElementById("guess").disabled = false;
+  document.getElementById("enviar-intento").disabled = false;
+  
+  // Si es modo diario, deshabilitamos el botón de reiniciar
+  if (isDailyMode) {
+    document.getElementById("reiniciar").disabled = true;
+  } else {
+    document.getElementById("reiniciar").disabled = false;
+  }
 }
+
 
 // Proyección de Mercator: convierte latitud y longitud (en grados)
 // a coordenadas X e Y en un plano.
@@ -365,10 +401,15 @@ function actualizarHistorialPartidas() {
 
 // Función para reiniciar el juego
 function reiniciarJuego() {
-    document.getElementById("guess").disabled = false;
-    document.getElementById("enviar-intento").disabled = false;
-    iniciarJuego();
+  if (isDailyMode) {
+    document.getElementById("feedback").textContent = "El juego diario no se puede reiniciar.";
+    return;
+  }
+  document.getElementById("guess").disabled = false;
+  document.getElementById("enviar-intento").disabled = false;
+  iniciarJuego();
 }
+
 
 // Autocompletar lista de países
 document.getElementById("guess").addEventListener("input", function () {
@@ -400,6 +441,14 @@ document.getElementById("guess").addEventListener("input", function () {
 // Eventos
 document.getElementById("enviar-intento").addEventListener("click", realizarIntento);
 document.getElementById("reiniciar").addEventListener("click", reiniciarJuego);
+
+document.getElementById("modeToggle").addEventListener("click", function () {
+  isDailyMode = !isDailyMode;
+  this.textContent = isDailyMode ? "Modo Diario" : "Modo Normal";
+  // Al cambiar de modo se inicia un nuevo juego
+  iniciarJuego();
+});
+
 
 // Cargar historial al inicio
 cargarHistorialPartidas();
