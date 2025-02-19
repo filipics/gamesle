@@ -442,13 +442,12 @@ document.getElementById("guess").addEventListener("input", function () {
 document.getElementById("enviar-intento").addEventListener("click", realizarIntento);
 document.getElementById("reiniciar").addEventListener("click", reiniciarJuego);
 
-document.getElementById("modeToggle").addEventListener("click", function () {
+document.getElementById("modo-juego").addEventListener("click", function () {
   isDailyMode = !isDailyMode;
   this.textContent = isDailyMode ? "Modo Diario" : "Modo Normal";
   // Al cambiar de modo se inicia un nuevo juego
   iniciarJuego();
 });
-
 
 // Cargar historial al inicio
 cargarHistorialPartidas();
