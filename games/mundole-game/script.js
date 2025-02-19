@@ -252,17 +252,26 @@ async function iniciarJuego() {
     document.getElementById("enviar-intento").disabled = false;
 }
 
-// Función para calcular la distancia entre dos coordenadas en un planisferio
-function calcularDistancia(lat1, lon1, lat2, lon2) {
-    const R = 6371;
-    const dLat = (lat2 - lat1) * (Math.PI / 180);
-    const dLon = (lon2 - lon1) * (Math.PI / 180);
-    const a = Math.sin(dLat / 2) ** 2 +
-              Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-              Math.sin(dLon / 2) ** 2;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
+// Proyección de Mercator: convierte latitud y longitud (en grados)
+// a coordenadas X e Y en un plano.
+function mercatorProjection(lat, lon) {
+  const rad = Math.PI / 180;
+  const x = lon * rad;
+  // La proyección de Mercator para la latitud:
+  const y = Math.log(Math.tan(Math.PI / 4 + (lat * rad) / 2));
+  return { x, y };
 }
+
+// Calcula la distancia en kilómetros en el planisferio (proyección de Mercator)
+function calcularDistanciaPlanisferio(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Radio de la Tierra en km
+  const p1 = mercatorProjection(lat1, lon1);
+  const p2 = mercatorProjection(lat2, lon2);
+  const dx = p2.x - p1.x;
+  const dy = p2.y - p1.y;
+  return Math.sqrt(dx * dx + dy * dy) * R;
+}
+
 
 // ✅ Corrección: Función para calcular la dirección con tolerancia de 10 grados
 function calcularDireccion(lat1, lon1, lat2, lon2) {
@@ -286,7 +295,12 @@ function calcularDireccion(lat1, lon1, lat2, lon2) {
 function realizarIntento() {
     if (intentos >= intentosMaximos) return;
 
-    let paisIntento = document.getElementById("guess").value;
+    let paisIntento = document.getElementById("guess").value.trim();
+    if (paisIntento === "") {
+        document.getElementById("feedback").textContent = "Por favor, ingresa un país.";
+        return;
+    }
+
     let paisEncontrado = paises.find(pais => pais.name.toLowerCase() === paisIntento.toLowerCase());
 
     if (!paisEncontrado) {
@@ -295,14 +309,14 @@ function realizarIntento() {
     }
 
     intentos++;
-    let distancia = calcularDistancia(paisEncontrado.lat, paisEncontrado.lon, paisSecreto.lat, paisSecreto.lon);
+    // Usamos la nueva función para calcular la distancia en el planisferio
+    let distancia = calcularDistanciaPlanisferio(paisEncontrado.lat, paisEncontrado.lon, paisSecreto.lat, paisSecreto.lon);
     let direccion = calcularDireccion(paisEncontrado.lat, paisEncontrado.lon, paisSecreto.lat, paisSecreto.lon);
 
     historialIntentos.push({ nombre: paisIntento, distancia: Math.round(distancia), direccion });
-
     actualizarHistorialIntentos();
 
-    document.getElementById("feedback").textContent = `El país secreto está a ${Math.round(distancia)} km al ${direccion} de ${paisIntento}.`;
+    document.getElementById("feedback").textContent = `El país secreto está a ${Math.round(distancia)} km al ${direccion} de ${paisIntento}. Te quedan ${intentosMaximos - intentos} intentos.`;
 
     document.getElementById("guess").value = "";
     document.getElementById("guess").placeholder = "Escribe aquí el país";
@@ -321,6 +335,7 @@ function realizarIntento() {
         bloquearEntradas();
     }
 }
+
 
 // Bloquear input después de ganar/perder
 function bloquearEntradas() {
