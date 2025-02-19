@@ -552,11 +552,11 @@ function shareDailyResult() {
   // Recorremos cada intento y armamos la línea correspondiente
   historialIntentos.forEach((attempt, index) => {
     // Por ejemplo, "1: 123 km SE 🢆"
-    shareText += `${index + 1}: ${attempt.distancia} km ${attempt.direccion} 🢆\n`;
+    shareText += `${index + 1}: ${attempt.distancia} km ${attempt.direccion}\n`;
   });
 
   // Agregamos la URL de tu juego
-  shareText += "\nhttps://tu-url-del-juego.com/";
+  shareText += "\nhttps://gamesle.netlify.app/";
 
   // Compartir: si es móvil, intentamos abrir WhatsApp; si no, usamos la API de Web Share o copiamos al portapapeles
   if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
