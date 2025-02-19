@@ -566,7 +566,7 @@ function shareDailyResult() {
     navigator.share({
       title: "Mundole - Resultado Diario",
       text: shareText,
-      url: "https://tu-url-del-juego.com/"
+      url: "https://gamesle.netlify.app/"
     })
     .then(() => console.log("Compartido exitosamente"))
     .catch(error => console.log("Error al compartir", error));
