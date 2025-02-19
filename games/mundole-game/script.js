@@ -364,6 +364,13 @@ function calcularDistanciaPlanisferio(lat1, lon1, lat2, lon2) {
 }
 
 
+// Bloquear input después de ganar/perder
+function bloquearEntradas() {
+    document.getElementById("guess").disabled = true;
+    document.getElementById("enviar-intento").disabled = true;
+}
+
+
 // ✅ Corrección: Función para calcular la dirección con tolerancia de 10 grados
 function calcularDireccion(lat1, lon1, lat2, lon2) {
     let dLat = lat1 - lat2;
@@ -446,11 +453,6 @@ function realizarIntento() {
 }
 
 
-// Bloquear input después de ganar/perder
-function bloquearEntradas() {
-    document.getElementById("guess").disabled = true;
-    document.getElementById("enviar-intento").disabled = true;
-}
 
 // Función para actualizar el historial de intentos
 function actualizarHistorialIntentos() {
