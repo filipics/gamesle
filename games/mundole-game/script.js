@@ -315,15 +315,18 @@ async function elegirPaisSecreto() {
 
 // Función para iniciar un nuevo juego
 async function iniciarJuego() {
+  // Al iniciar un juego normal, reiniciamos gameOver a false.
+  if (!isDailyMode) {
+    gameOver = false;
+  }
+  
   intentos = 0;
   historialIntentos = [];
   actualizarHistorialIntentos();
   
-  // Si estamos en modo diario, intentamos cargar el estado guardado
   if (isDailyMode && loadDailyGameState()) {
-    // Ya se cargó el estado y se mostrará en la UI, no se reinicia el juego.
+    // Se cargó el estado guardado para el día.
   } else {
-    // Si no es modo diario o no hay estado guardado, se selecciona un país nuevo.
     paisSecreto = await elegirPaisSecreto();
     document.getElementById("country-image").src = paisSecreto.image;
     document.getElementById("feedback").textContent = "";
@@ -333,7 +336,6 @@ async function iniciarJuego() {
   document.getElementById("guess").disabled = false;
   document.getElementById("enviar-intento").disabled = false;
   
-  // Si es modo diario, deshabilitamos el botón de reiniciar para evitar que se juegue más de una vez
   if (isDailyMode) {
     document.getElementById("reiniciar").disabled = true;
   } else {
@@ -368,6 +370,7 @@ function calcularDistanciaPlanisferio(lat1, lon1, lat2, lon2) {
 function bloquearEntradas() {
     document.getElementById("guess").disabled = true;
     document.getElementById("enviar-intento").disabled = true;
+    gameOver = true; // Esto evita nuevos intentos
 }
 
 
