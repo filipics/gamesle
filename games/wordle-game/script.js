@@ -17495,14 +17495,15 @@ document.getElementById("modeToggle").addEventListener("click", function () {
 
 
 
+// Ejemplo de agregar el listener sin DOMContentLoaded, asumiendo que el script se carga al final
+document.getElementById("share-button").addEventListener("click", shareResult);
+
 function shareResult() {
-  // Solo compartimos si ya se terminó el juego (o puedes decidir compartir el progreso parcial)
   if (!gameOver) {
     showMessage("Termina el juego para compartir el resultado.");
     return;
   }
-
-  // Formatear la fecha: dd-mon-yy
+  
   const today = new Date();
   const day = today.getDate();
   const monthNames = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
@@ -17512,11 +17513,7 @@ function shareResult() {
 
   let shareText = `Wordle (Gamesle) del dia ${dateStr}:\n`;
 
-  // Calculamos cuántas filas se completaron.
-  // Si el juego terminó, se comparte la fila en la que se ganó/perdió.
   const rowsToShare = gameOver ? currentRow + 1 : currentRow;
-
-  // Obtener todas las celdas del grid
   const cells = document.querySelectorAll(".cell");
   for (let row = 0; row < rowsToShare; row++) {
     let rowResult = "";
@@ -17530,7 +17527,6 @@ function shareResult() {
       } else if (cell.classList.contains("absent")) {
         rowResult += "🟥";
       } else {
-        // En caso de que alguna celda no tenga resultado (por ejemplo, en una fila incompleta)
         rowResult += "⬜";
       }
     }
@@ -17539,7 +17535,6 @@ function shareResult() {
 
   shareText += "\nhttps://gamesle.netlify.app/";
 
-  // Usamos la API del portapapeles para copiar el texto
   navigator.clipboard.writeText(shareText)
     .then(() => {
       showMessage("¡Resultado copiado al portapapeles!");
@@ -17548,8 +17543,6 @@ function shareResult() {
       showMessage("Error al copiar el resultado.");
     });
 }
-
-
 
 
 
