@@ -17491,6 +17491,69 @@ document.getElementById("modeToggle").addEventListener("click", function () {
 });
 
 
+
+
+
+
+function shareResult() {
+  // Solo compartimos si ya se terminó el juego (o puedes decidir compartir el progreso parcial)
+  if (!gameOver) {
+    showMessage("Termina el juego para compartir el resultado.");
+    return;
+  }
+
+  // Formatear la fecha: dd-mon-yy
+  const today = new Date();
+  const day = today.getDate();
+  const monthNames = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  const month = monthNames[today.getMonth()];
+  const year = today.getFullYear().toString().substr(-2);
+  const dateStr = `${day}-${month}-${year}`;
+
+  let shareText = `Wordle (Gamesle) del dia ${dateStr}:\n`;
+
+  // Calculamos cuántas filas se completaron.
+  // Si el juego terminó, se comparte la fila en la que se ganó/perdió.
+  const rowsToShare = gameOver ? currentRow + 1 : currentRow;
+
+  // Obtener todas las celdas del grid
+  const cells = document.querySelectorAll(".cell");
+  for (let row = 0; row < rowsToShare; row++) {
+    let rowResult = "";
+    for (let col = 0; col < 5; col++) {
+      const cellIndex = row * 5 + col;
+      const cell = cells[cellIndex];
+      if (cell.classList.contains("correct")) {
+        rowResult += "🟩";
+      } else if (cell.classList.contains("present")) {
+        rowResult += "🟨";
+      } else if (cell.classList.contains("absent")) {
+        rowResult += "🟥";
+      } else {
+        // En caso de que alguna celda no tenga resultado (por ejemplo, en una fila incompleta)
+        rowResult += "⬜";
+      }
+    }
+    shareText += rowResult + "\n";
+  }
+
+  shareText += "\nhttps://gamesle.netlify.app/";
+
+  // Usamos la API del portapapeles para copiar el texto
+  navigator.clipboard.writeText(shareText)
+    .then(() => {
+      showMessage("¡Resultado copiado al portapapeles!");
+    })
+    .catch(() => {
+      showMessage("Error al copiar el resultado.");
+    });
+}
+
+
+
+
+
+
 /* ==================== Inicialización ==================== */
 document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("toggle-history").addEventListener("click", toggleHistory);
