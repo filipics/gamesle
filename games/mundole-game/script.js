@@ -527,6 +527,61 @@ document.getElementById("modo-juego").addEventListener("click", function () {
   iniciarJuego();
 });
 
+function shareDailyResult() {
+  // Solo permitimos compartir si estamos en modo diario
+  if (!isDailyMode) {
+    showMessage("Solo se puede compartir el resultado en modo diario.");
+    return;
+  }
+  // Si no hay intentos registrados, no hay nada que compartir
+  if (historialIntentos.length === 0) {
+    showMessage("No hay intentos para compartir.");
+    return;
+  }
+
+  // Formateamos la fecha (dd-mon-yy)
+  const today = new Date();
+  const day = today.getDate();
+  const monthNames = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  const month = monthNames[today.getMonth()];
+  const year = today.getFullYear().toString().substr(-2);
+  const dateStr = `${day}-${month}-${year}`;
+
+  let shareText = `Mundole del día ${dateStr}:\n`;
+
+  // Recorremos cada intento y armamos la línea correspondiente
+  historialIntentos.forEach((attempt, index) => {
+    // Por ejemplo, "1: 123 km SE 🢆"
+    shareText += `${index + 1}: ${attempt.distancia} km ${attempt.direccion} 🢆\n`;
+  });
+
+  // Agregamos la URL de tu juego
+  shareText += "\nhttps://tu-url-del-juego.com/";
+
+  // Compartir: si es móvil, intentamos abrir WhatsApp; si no, usamos la API de Web Share o copiamos al portapapeles
+  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    const whatsappUrl = "whatsapp://send?text=" + encodeURIComponent(shareText);
+    window.open(whatsappUrl, "_blank");
+  } else if (navigator.share) {
+    navigator.share({
+      title: "Mundole - Resultado Diario",
+      text: shareText,
+      url: "https://tu-url-del-juego.com/"
+    })
+    .then(() => console.log("Compartido exitosamente"))
+    .catch(error => console.log("Error al compartir", error));
+  } else {
+    navigator.clipboard.writeText(shareText)
+      .then(() => {
+        showMessage("¡Resultado copiado al portapapeles!");
+      })
+      .catch(() => {
+        showMessage("Error al copiar el resultado.");
+      });
+  }
+}
+
+
 
 // Cargar historial al inicio
 cargarHistorialPartidas();
