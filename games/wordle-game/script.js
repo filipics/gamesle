@@ -17571,7 +17571,7 @@ function shareResult() {
 
 
 document.addEventListener("DOMContentLoaded", function () {
-  // Asignamos los listeners para historia, reinicio y teclas:
+  // Asignar listeners a historia, reinicio y teclas:
   document.getElementById("toggle-history").addEventListener("click", toggleHistory);
   document.getElementById("reset-game").addEventListener("click", resetGame);
   document.addEventListener("keydown", (event) => {
@@ -17585,20 +17585,23 @@ document.addEventListener("DOMContentLoaded", function () {
     if (parsedState.lastPlayedDate === new Date().toDateString()) {
       // Forzamos el modo diario si hay estado guardado del día de hoy
       isDailyMode = true;
-      // Actualizamos el botón de modo; asegúrate de que el id sea el mismo que usas en tu toggle
+      // Actualizamos el botón de modo (asegúrate de que el id coincida con el HTML)
       document.getElementById("modeToggle").textContent = "Modo Diario";
     }
   }
 
-  // Si estamos en modo diario y se pudo cargar el estado, no reiniciamos el juego
+  // **Primero generamos el grid y el teclado**
+  generateGrid();
+  generateKeyboard();
+
+  // Ahora, si estamos en modo diario y se puede cargar el estado, lo dejamos tal cual;
+  // de lo contrario, iniciamos un juego nuevo.
   if (isDailyMode && loadDailyGameState()) {
     // El estado diario se ha cargado y la UI ya refleja la partida guardada.
   } else {
-    // Si no estamos en modo diario o no hay juego diario guardado, iniciamos un juego nuevo
     selectRandomWord();
     resetGame();
   }
   
-  generateKeyboard();
   updateHistoryDisplay();
 });
