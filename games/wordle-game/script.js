@@ -17568,33 +17568,35 @@ function shareResult() {
 
 
 
-/* ==================== Inicialización ==================== */
 document.addEventListener("DOMContentLoaded", function () {
-  // Si existe un juego diario guardado para hoy, forzamos el modo diario.
-  const savedDailyGame = localStorage.getItem("dailyGameState");
-  if (savedDailyGame) {
-    const parsedState = JSON.parse(savedDailyGame);
-    if (parsedState.lastPlayedDate === new Date().toDateString()) {
-      isDailyMode = true;
-      // Actualizamos el texto del botón toggle (asegúrate de que el id coincida)
-      document.getElementById("modeToggle").textContent = "Modo Diario";
-    }
-  }
-  
+  // Asignamos los listeners para historia, reinicio y teclas:
   document.getElementById("toggle-history").addEventListener("click", toggleHistory);
   document.getElementById("reset-game").addEventListener("click", resetGame);
   document.addEventListener("keydown", (event) => {
     handleKeyPress(event.key);
   });
-  
-  // Si estamos en modo diario y hay estado guardado, se carga ese estado
+
+  // Verificar si existe un juego diario guardado para hoy
+  const savedDailyGame = localStorage.getItem("dailyGameState");
+  if (savedDailyGame) {
+    const parsedState = JSON.parse(savedDailyGame);
+    if (parsedState.lastPlayedDate === new Date().toDateString()) {
+      // Forzamos el modo diario si hay estado guardado del día de hoy
+      isDailyMode = true;
+      // Actualizamos el botón de modo; asegúrate de que el id sea el mismo que usas en tu toggle
+      document.getElementById("modeToggle").textContent = "Modo Diario";
+    }
+  }
+
+  // Si estamos en modo diario y se pudo cargar el estado, no reiniciamos el juego
   if (isDailyMode && loadDailyGameState()) {
-    // El estado ya se cargó, la UI se actualizó y no se reinicia el juego.
+    // El estado diario se ha cargado y la UI ya refleja la partida guardada.
   } else {
-    // Modo normal o modo diario sin estado previo: se inicia un juego nuevo.
+    // Si no estamos en modo diario o no hay juego diario guardado, iniciamos un juego nuevo
     selectRandomWord();
     resetGame();
   }
+  
   generateKeyboard();
   updateHistoryDisplay();
 });
