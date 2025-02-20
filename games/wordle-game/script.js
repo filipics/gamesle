@@ -17141,10 +17141,15 @@ function loadDailyGameState() {
     const cells = document.querySelectorAll(".cell");
     savedGame.boardState.forEach((cellData, index) => {
       const cell = cells[index];
-      cell.querySelector("span").innerText = cellData.letter;
-      cell.classList.remove("correct", "present", "absent");
-      if (cellData.class) {
-        cell.classList.add(cellData.class);
+      if (cell) { // Se comprueba que la celda exista
+        const span = cell.querySelector("span");
+        if (span) {
+          span.innerText = cellData.letter;
+        }
+        cell.classList.remove("correct", "present", "absent");
+        if (cellData.class) {
+          cell.classList.add(cellData.class);
+        }
       }
     });
     savedGame.keyboardState.forEach(keyData => {
@@ -17491,10 +17496,6 @@ document.getElementById("modeToggle").addEventListener("click", function () {
 });
 
 
-
-
-
-
 // Ejemplo de agregar el listener sin DOMContentLoaded, asumiendo que el script se carga al final
 document.getElementById("share-button").addEventListener("click", shareResult);
 
@@ -17526,14 +17527,16 @@ function shareResult() {
     for (let col = 0; col < 5; col++) {
       const cellIndex = row * 5 + col;
       const cell = cells[cellIndex];
-      if (cell.classList.contains("correct")) {
-        rowResult += "🟩";
-      } else if (cell.classList.contains("present")) {
-        rowResult += "🟨";
-      } else if (cell.classList.contains("absent")) {
-        rowResult += "🟥";
-      } else {
-        rowResult += "⬜";
+      if (cell) {
+        if (cell.classList.contains("correct")) {
+          rowResult += "🟩";
+        } else if (cell.classList.contains("present")) {
+          rowResult += "🟨";
+        } else if (cell.classList.contains("absent")) {
+          rowResult += "🟥";
+        } else {
+          rowResult += "⬜";
+        }
       }
     }
     shareText += rowResult + "\n";
@@ -17563,7 +17566,6 @@ function shareResult() {
       });
   }
 }
-
 
 
 
