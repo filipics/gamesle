@@ -17570,14 +17570,31 @@ function shareResult() {
 
 /* ==================== Inicialización ==================== */
 document.addEventListener("DOMContentLoaded", function () {
+  // Si existe un juego diario guardado para hoy, forzamos el modo diario.
+  const savedDailyGame = localStorage.getItem("dailyGameState");
+  if (savedDailyGame) {
+    const parsedState = JSON.parse(savedDailyGame);
+    if (parsedState.lastPlayedDate === new Date().toDateString()) {
+      isDailyMode = true;
+      // Actualizamos el texto del botón toggle (asegúrate de que el id coincida)
+      document.getElementById("modeToggle").textContent = "Modo Diario";
+    }
+  }
+  
   document.getElementById("toggle-history").addEventListener("click", toggleHistory);
   document.getElementById("reset-game").addEventListener("click", resetGame);
   document.addEventListener("keydown", (event) => {
     handleKeyPress(event.key);
   });
-  // Inicio en modo normal
-  selectRandomWord();
-  resetGame();
+  
+  // Si estamos en modo diario y hay estado guardado, se carga ese estado
+  if (isDailyMode && loadDailyGameState()) {
+    // El estado ya se cargó, la UI se actualizó y no se reinicia el juego.
+  } else {
+    // Modo normal o modo diario sin estado previo: se inicia un juego nuevo.
+    selectRandomWord();
+    resetGame();
+  }
   generateKeyboard();
   updateHistoryDisplay();
 });
