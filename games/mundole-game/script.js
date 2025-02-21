@@ -198,22 +198,25 @@ const paises = [
 ];
 
 
+// Variables Globales
 const intentosMaximos = 5;
 let intentos = 0;
 let historialIntentos = [];
 let historialPartidas = [];
 let paisSecreto;
 let isDailyMode = false; // Cambia a true para iniciar en modo diario
-let gameOver = false; // Variable global para saber si el juego terminó
+let gameOver = false;   // Variable global para saber si el juego terminó
 
+// (La lista de países no se incluye aquí)
 
+// Bloquear entradas tras finalizar el juego
 function bloquearEntradas() {
     document.getElementById("guess").disabled = true;
     document.getElementById("enviar-intento").disabled = true;
     gameOver = true; // Marcamos que el juego terminó
 }
 
-
+// Función para generar un hash numérico a partir de un string
 function hashCode(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -222,7 +225,7 @@ function hashCode(str) {
   return hash;
 }
 
-
+// Cargar estado del juego diario desde localStorage
 function loadDailyGameState() {
   const savedState = localStorage.getItem("dailyGameState");
   if (savedState) {
@@ -231,7 +234,7 @@ function loadDailyGameState() {
     if (state.lastDailyDate === new Date().toDateString()) {
       intentos = state.intentos;
       historialIntentos = state.historialIntentos;
-      paisSecreto = state.paisSecreto; // Asegúrate de que se guarde como objeto (por JSON)
+      paisSecreto = state.paisSecreto; // Se guarda como objeto JSON
       document.getElementById("country-image").src = paisSecreto.image;
       document.getElementById("feedback").textContent = state.feedback || "";
       // Actualizamos el historial de intentos en la UI
@@ -246,20 +249,20 @@ function loadDailyGameState() {
   return false;
 }
 
-
+// Guardar estado del juego diario en localStorage
 function saveDailyGameState() {
-  // Creamos un objeto con el estado actual
-  const state = {
-    intentos: intentos,
-    historialIntentos: historialIntentos,
-    paisSecreto: paisSecreto,
-    feedback: document.getElementById("feedback").textContent,
-    gameOver: document.getElementById("guess").disabled && document.getElementById("enviar-intento").disabled,
-    lastDailyDate: new Date().toDateString()
-  };
-  localStorage.setItem("dailyGameState", JSON.stringify(state));
+  if (isDailyMode) {
+    const state = {
+      intentos: intentos,
+      historialIntentos: historialIntentos,
+      paisSecreto: paisSecreto,
+      feedback: document.getElementById("feedback").textContent,
+      gameOver: document.getElementById("guess").disabled && document.getElementById("enviar-intento").disabled,
+      lastDailyDate: new Date().toDateString()
+    };
+    localStorage.setItem("dailyGameState", JSON.stringify(state));
+  }
 }
-
 
 // Cargar historial de partidas desde localStorage
 function cargarHistorialPartidas() {
@@ -285,17 +288,16 @@ function imagenExiste(url) {
     });
 }
 
-// Función para elegir un país asegurándose de que tenga imagen
+// Función para elegir un país (con imagen) asegurándose de que tenga imagen
 async function elegirPaisSecreto() {
   if (isDailyMode) {
     const todayDate = new Date().toDateString();
     const savedDailyCountry = localStorage.getItem("dailyCountry");
     const savedDailyDate = localStorage.getItem("lastDailyDate");
-
     if (savedDailyCountry && savedDailyDate === todayDate) {
       return JSON.parse(savedDailyCountry);
     } else {
-      // Determinísticamente se elige un país:
+      // Se elige determinísticamente un país basado en la fecha
       let index = Math.abs(hashCode(todayDate)) % paises.length;
       let chosenCountry = paises[index];
       localStorage.setItem("dailyCountry", JSON.stringify(chosenCountry));
@@ -312,10 +314,9 @@ async function elegirPaisSecreto() {
   }
 }
 
-
 // Función para iniciar un nuevo juego
 async function iniciarJuego() {
-  // Al iniciar un juego normal, reiniciamos gameOver a false.
+  // Para modo normal, reiniciamos gameOver a false
   if (!isDailyMode) {
     gameOver = false;
   }
@@ -325,7 +326,7 @@ async function iniciarJuego() {
   actualizarHistorialIntentos();
   
   if (isDailyMode && loadDailyGameState()) {
-    // Se cargó el estado guardado para el día.
+    // Se cargó el estado guardado para el día (la UI se actualizó)
   } else {
     paisSecreto = await elegirPaisSecreto();
     document.getElementById("country-image").src = paisSecreto.image;
@@ -343,19 +344,15 @@ async function iniciarJuego() {
   }
 }
 
-
-
-// Proyección de Mercator: convierte latitud y longitud (en grados)
-// a coordenadas X e Y en un plano.
+// Proyección de Mercator: convierte latitud y longitud a coordenadas X, Y en un plano
 function mercatorProjection(lat, lon) {
   const rad = Math.PI / 180;
   const x = lon * rad;
-  // La proyección de Mercator para la latitud:
   const y = Math.log(Math.tan(Math.PI / 4 + (lat * rad) / 2));
   return { x, y };
 }
 
-// Calcula la distancia en kilómetros en el planisferio (proyección de Mercator)
+// Calcula la distancia en kilómetros en el planisferio usando la proyección de Mercator
 function calcularDistanciaPlanisferio(lat1, lon1, lat2, lon2) {
   const R = 6371; // Radio de la Tierra en km
   const p1 = mercatorProjection(lat1, lon1);
@@ -365,27 +362,23 @@ function calcularDistanciaPlanisferio(lat1, lon1, lat2, lon2) {
   return Math.sqrt(dx * dx + dy * dy) * R;
 }
 
-
-// Bloquear input después de ganar/perder
+// Bloquear entradas tras ganar o perder
 function bloquearEntradas() {
     document.getElementById("guess").disabled = true;
     document.getElementById("enviar-intento").disabled = true;
-    gameOver = true; // Esto evita nuevos intentos
+    gameOver = true;
 }
 
-
-// ✅ Corrección: Función para calcular la dirección con tolerancia de 10 grados
+// Función para calcular la dirección con tolerancia de 10 grados
 function calcularDireccion(lat1, lon1, lat2, lon2) {
     let dLat = lat1 - lat2;
     let dLon = lon1 - lon2;
     let angulo = Math.atan2(dLon, dLat) * (180 / Math.PI);
     if (angulo < 0) angulo += 360;
-
     if (angulo >= 350 || angulo < 10) return "S";
     if (angulo >= 80 && angulo < 100) return "O";
     if (angulo >= 170 && angulo < 190) return "N";
     if (angulo >= 260 && angulo < 280) return "E";
-
     if (angulo >= 10 && angulo < 80) return "SO";
     if (angulo >= 100 && angulo < 170) return "NO";
     if (angulo >= 190 && angulo < 260) return "NE";
@@ -394,7 +387,6 @@ function calcularDireccion(lat1, lon1, lat2, lon2) {
 
 // Función para manejar un intento del jugador
 function realizarIntento() {
-    // Si el juego ya terminó, no procesamos más intentos
     if (gameOver) return;
 
     let paisIntento = document.getElementById("guess").value.trim();
@@ -455,8 +447,6 @@ function realizarIntento() {
     }
 }
 
-
-
 // Función para actualizar el historial de intentos
 function actualizarHistorialIntentos() {
     let tablaIntentos = document.getElementById("tabla-intentos");
@@ -477,7 +467,7 @@ function actualizarHistorialPartidas() {
     });
 }
 
-// Función para reiniciar el juego
+// Función para reiniciar el juego (no aplicable en modo diario)
 function reiniciarJuego() {
   if (isDailyMode) {
     document.getElementById("feedback").textContent = "El juego diario no se puede reiniciar.";
@@ -487,7 +477,6 @@ function reiniciarJuego() {
   document.getElementById("enviar-intento").disabled = false;
   iniciarJuego();
 }
-
 
 // Autocompletar lista de países
 document.getElementById("guess").addEventListener("input", function () {
@@ -516,10 +505,11 @@ document.getElementById("guess").addEventListener("input", function () {
     suggestions.style.display = coincidencias.length > 0 ? "block" : "none";
 });
 
-// Eventos
+// Asignar eventos a botones
 document.getElementById("enviar-intento").addEventListener("click", realizarIntento);
 document.getElementById("reiniciar").addEventListener("click", reiniciarJuego);
 
+// Cambio de modo: alterna entre modo diario y modo normal
 document.getElementById("modo-juego").addEventListener("click", function () {
   isDailyMode = !isDailyMode;
   this.textContent = isDailyMode ? "Modo Diario" : "Modo Normal";
@@ -527,6 +517,7 @@ document.getElementById("modo-juego").addEventListener("click", function () {
   iniciarJuego();
 });
 
+// Función para compartir el resultado del modo diario
 function shareDailyResult() {
   // Solo permitimos compartir si estamos en modo diario
   if (!isDailyMode) {
@@ -551,14 +542,13 @@ function shareDailyResult() {
 
   // Recorremos cada intento y armamos la línea correspondiente
   historialIntentos.forEach((attempt, index) => {
-    // Por ejemplo, "1: 123 km SE 🢆"
     shareText += `${index + 1}: ${attempt.distancia} km ${attempt.direccion}\n`;
   });
 
   // Agregamos la URL de tu juego
   shareText += "\nhttps://gamesle.netlify.app/";
 
-  // Compartir: si es móvil, intentamos abrir WhatsApp; si no, usamos la API de Web Share o copiamos al portapapeles
+  // Compartir: usamos WhatsApp, Web Share o copiamos al portapapeles
   if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
     const whatsappUrl = "whatsapp://send?text=" + encodeURIComponent(shareText);
     window.open(whatsappUrl, "_blank");
@@ -581,10 +571,27 @@ function shareDailyResult() {
   }
 }
 
+// Inicialización al cargar la página
+document.addEventListener("DOMContentLoaded", function () {
+  // Primero, cargamos el historial de partidas
+  cargarHistorialPartidas();
 
+  // Verificar si existe un juego diario guardado para hoy
+  const savedDailyGame = localStorage.getItem("dailyGameState");
+  if (savedDailyGame) {
+    const parsedState = JSON.parse(savedDailyGame);
+    if (parsedState.lastDailyDate === new Date().toDateString()) {
+      // Forzamos el modo diario si hay estado guardado del día de hoy
+      isDailyMode = true;
+      document.getElementById("modo-juego").textContent = "Modo Diario";
+    }
+  }
 
-// Cargar historial al inicio
-cargarHistorialPartidas();
-
-// Iniciar el juego al cargar
-iniciarJuego();
+  // Si estamos en modo diario y se pudo cargar el estado, dejamos la UI como está.
+  // De lo contrario, iniciamos un juego nuevo.
+  if (isDailyMode && loadDailyGameState()) {
+    // El estado diario se ha cargado y la UI ya refleja la partida guardada.
+  } else {
+    iniciarJuego();
+  }
+});
