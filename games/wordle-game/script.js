@@ -17117,7 +17117,6 @@
         "zuzos"
     ].map(word => removeAccents(word));
 
-
 // ==================== Variables Globales ==================== 
 let currentRow = 0;
 let currentCol = 0;
@@ -17139,19 +17138,21 @@ function removeAccents(word) {
   return word.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
+// (La lista de palabras se asume que ya está definida en otro lugar)
+
 // ==================== Estado del Juego Diario (LocalStorage) ==================== 
 function loadDailyGameState() {
   const savedGame = localStorage.getItem(DAILY_GAME_STATE_KEY_WORDLE);
   if (savedGame) {
     const state = JSON.parse(savedGame);
-    // Verificamos que la fecha guardada sea la de hoy
+    // Comprobamos que la fecha guardada sea la de hoy
     if (state.lastPlayedDate === new Date().toDateString()) {
       guessedWords = state.guessedWords || [];
       currentRow = state.currentRow || 0;
       const cells = document.querySelectorAll(".cell");
       state.boardState.forEach((cellData, index) => {
         const cell = cells[index];
-        if (cell) { // Se comprueba que la celda exista
+        if (cell) {
           const span = cell.querySelector("span");
           if (span) {
             span.innerText = cellData.letter;
@@ -17217,6 +17218,7 @@ function saveDailyGameState() {
   }
 }
 
+// ==================== Historial ==================== 
 function saveGameResult(won, attempts) {
   let gameHistory = JSON.parse(localStorage.getItem("gameHistory")) || [];
   let gameRecord = {
@@ -17523,4 +17525,84 @@ function shareResult() {
   }
   const rowsToShare = gameOver ? currentRow + 1 : currentRow;
   const cells = document.querySelectorAll(".cell");
-  for (let row = 0; row < rows
+  for (let row = 0; row < rowsToShare; row++) {
+    let rowResult = "";
+    for (let col = 0; col < 5; col++) {
+      const cellIndex = row * 5 + col;
+      const cell = cells[cellIndex];
+      if (cell) {
+        if (cell.classList.contains("correct")) {
+          rowResult += "🟩";
+        } else if (cell.classList.contains("present")) {
+          rowResult += "🟨";
+        } else if (cell.classList.contains("absent")) {
+          rowResult += "🟥";
+        } else {
+          rowResult += "⬜";
+        }
+      }
+    }
+    shareText += rowResult + "\n";
+  }
+  shareText += "\nhttps://gamesle.netlify.app/";
+  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    const whatsappUrl = "whatsapp://send?text=" + encodeURIComponent(shareText);
+    window.open(whatsappUrl, "_blank");
+  } else if (navigator.share) {
+    navigator.share({
+      title: "Wordle (Gamesle)",
+      text: shareText,
+      url: "https://gamesle.netlify.app/"
+    })
+      .then(() => console.log("Compartido exitosamente"))
+      .catch(error => console.log("Error al compartir", error));
+  } else {
+    navigator.clipboard.writeText(shareText)
+      .then(() => {
+        showMessage("¡Resultado copiado al portapapeles!");
+      })
+      .catch(() => {
+        showMessage("Error al copiar el resultado.");
+      });
+  }
+}
+
+// ==================== Inicialización ==================== 
+document.addEventListener("DOMContentLoaded", function () {
+  // Asignamos listeners para historia, reinicio y teclas:
+  document.getElementById("toggle-history").addEventListener("click", toggleHistory);
+  document.getElementById("reset-game").addEventListener("click", resetGame);
+  document.addEventListener("keydown", (event) => {
+    handleKeyPress(event.key);
+  });
+  // Leer bandera de modo diario guardada para Wordle
+  const storedMode = localStorage.getItem(IS_DAILY_MODE_KEY_WORDLE);
+  if (storedMode === "true") {
+    isDailyMode = true;
+    document.getElementById("modeToggle").textContent = "Modo Diario";
+  }
+  // Verificar si existe un juego diario guardado para hoy
+  const savedDailyGame = localStorage.getItem(DAILY_GAME_STATE_KEY_WORDLE);
+  const todayDate = new Date().toDateString();
+  if (savedDailyGame) {
+    const parsedState = JSON.parse(savedDailyGame);
+    if (parsedState.lastPlayedDate === todayDate) {
+      isDailyMode = true;
+      document.getElementById("modeToggle").textContent = "Modo Diario";
+    }
+  }
+  // Primero generamos el grid y el teclado para que existan en el DOM
+  generateGrid();
+  generateKeyboard();
+  if (isDailyMode) {
+    if (!loadDailyGameState()) {
+      selectRandomWord();
+      saveDailyGameState();
+      loadDailyGameState();
+    }
+  } else {
+    selectRandomWord();
+    resetGame();
+  }
+  updateHistoryDisplay();
+});
