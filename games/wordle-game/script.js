@@ -17118,7 +17118,7 @@
     ].map(word => removeAccents(word));
 
 
-/* ==================== Variables Globales ==================== */
+// ==================== Variables Globales ==================== 
 let currentRow = 0;
 let currentCol = 0;
 let gameOver = false;
@@ -17128,46 +17128,55 @@ let targetWord = "";
 let isDailyMode = false;
 let guessedWords = [];
 
-/* ==================== Listas de Palabras y Utilidades ==================== */
+// Claves únicas para Wordle en localStorage
+const DAILY_GAME_STATE_KEY_WORDLE = "dailyGameStateWordle";
+const DAILY_WORD_KEY_WORDLE = "dailyWordWordle";
+const LAST_PLAYED_DATE_KEY_WORDLE = "lastPlayedDateWordle";
+const IS_DAILY_MODE_KEY_WORDLE = "isDailyModeWordle";
+
+// ==================== Listas de Palabras y Utilidades ==================== 
 function removeAccents(word) {
   return word.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-
-/* ==================== Estado del Juego Diario (LocalStorage) ==================== */
+// ==================== Estado del Juego Diario (LocalStorage) ==================== 
 function loadDailyGameState() {
-  const savedGame = JSON.parse(localStorage.getItem("dailyGameState"));
-  if (savedGame && savedGame.lastPlayedDate === new Date().toDateString()) {
-    guessedWords = savedGame.guessedWords || [];
-    currentRow = savedGame.currentRow || 0;
-    const cells = document.querySelectorAll(".cell");
-    savedGame.boardState.forEach((cellData, index) => {
-      const cell = cells[index];
-      if (cell) { // Se comprueba que la celda exista
-        const span = cell.querySelector("span");
-        if (span) {
-          span.innerText = cellData.letter;
+  const savedGame = localStorage.getItem(DAILY_GAME_STATE_KEY_WORDLE);
+  if (savedGame) {
+    const state = JSON.parse(savedGame);
+    // Verificamos que la fecha guardada sea la de hoy
+    if (state.lastPlayedDate === new Date().toDateString()) {
+      guessedWords = state.guessedWords || [];
+      currentRow = state.currentRow || 0;
+      const cells = document.querySelectorAll(".cell");
+      state.boardState.forEach((cellData, index) => {
+        const cell = cells[index];
+        if (cell) { // Se comprueba que la celda exista
+          const span = cell.querySelector("span");
+          if (span) {
+            span.innerText = cellData.letter;
+          }
+          cell.classList.remove("correct", "present", "absent");
+          if (cellData.class) {
+            cell.classList.add(cellData.class);
+          }
         }
-        cell.classList.remove("correct", "present", "absent");
-        if (cellData.class) {
-          cell.classList.add(cellData.class);
+      });
+      state.keyboardState.forEach(keyData => {
+        const keyElement = document.getElementById("key-" + keyData.letter);
+        if (keyElement) {
+          keyElement.classList.remove("correct", "present", "absent");
+          if (keyData.class) {
+            keyElement.classList.add(keyData.class);
+          }
         }
+      });
+      if (state.gameOver === true) {
+        gameOver = true;
+        document.querySelectorAll(".key").forEach(key => key.style.pointerEvents = "none");
       }
-    });
-    savedGame.keyboardState.forEach(keyData => {
-      const keyElement = document.getElementById("key-" + keyData.letter);
-      if (keyElement) {
-        keyElement.classList.remove("correct", "present", "absent");
-        if (keyData.class) {
-          keyElement.classList.add(keyData.class);
-        }
-      }
-    });
-    if (savedGame.gameOver === true) {
-      gameOver = true;
-      document.querySelectorAll(".key").forEach(key => key.style.pointerEvents = "none");
+      return true;
     }
-    return true;
   }
   return false;
 }
@@ -17204,7 +17213,7 @@ function saveDailyGameState() {
       gameOver: gameOver,
       lastPlayedDate: new Date().toDateString()
     };
-    localStorage.setItem("dailyGameState", JSON.stringify(gameState));
+    localStorage.setItem(DAILY_GAME_STATE_KEY_WORDLE, JSON.stringify(gameState));
   }
 }
 
@@ -17246,8 +17255,7 @@ function toggleHistory() {
   }
 }
 
-
-// Función que genera un hash numérico a partir de un string
+// ==================== Función que genera un hash numérico ==================== 
 function hashCode(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -17256,26 +17264,22 @@ function hashCode(str) {
   return hash;
 }
 
-
-
-
-/* ==================== Selección de Palabra ==================== */
+// ==================== Selección de Palabra ==================== 
 function selectRandomWord() {
   const wordsOfFiveLetters = wordSelectionList.filter(word => word.length === 5);
   if (wordsOfFiveLetters.length > 0) {
     if (isDailyMode) {
-      const savedDailyWord = localStorage.getItem("dailyWord");
+      const savedDailyWord = localStorage.getItem(DAILY_WORD_KEY_WORDLE);
       const todayDate = new Date().toDateString();
-      if (savedDailyWord && localStorage.getItem("lastPlayedDate") === todayDate) {
+      if (savedDailyWord && localStorage.getItem(LAST_PLAYED_DATE_KEY_WORDLE) === todayDate) {
         targetWord = savedDailyWord;
       } else {
-        // Utilizamos la fecha como string para generar un hash
         const todayStr = todayDate;
         const hash = Math.abs(hashCode(todayStr));
         const randomIndex = hash % wordsOfFiveLetters.length;
         targetWord = wordsOfFiveLetters[randomIndex];
-        localStorage.setItem("dailyWord", targetWord);
-        localStorage.setItem("lastPlayedDate", todayDate);
+        localStorage.setItem(DAILY_WORD_KEY_WORDLE, targetWord);
+        localStorage.setItem(LAST_PLAYED_DATE_KEY_WORDLE, todayDate);
       }
     } else {
       const randomIndex = Math.floor(Math.random() * wordsOfFiveLetters.length);
@@ -17287,7 +17291,7 @@ function selectRandomWord() {
   }
 }
 
-/* ==================== Generar el Tablero (Grid) ==================== */
+// ==================== Generar el Tablero (Grid) ==================== 
 function generateGrid() {
   currentRow = 0;
   currentCol = 0;
@@ -17305,7 +17309,7 @@ function generateGrid() {
   }
 }
 
-/* ==================== Generar el Teclado ==================== */
+// ==================== Generar el Teclado ==================== 
 function generateKeyboard() {
   const row1 = ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"];
   const row2 = ["a", "s", "d", "f", "g", "h", "j", "k", "l", "ñ"];
@@ -17334,7 +17338,7 @@ function createKey(letter, rowContainer) {
   rowContainer.appendChild(keyDiv);
 }
 
-/* ==================== Manejo de Entrada de Teclas ==================== */
+// ==================== Manejo de Entrada de Teclas ==================== 
 function handleKeyPress(key) {
   if (gameOver) return;
   key = key.toLowerCase();
@@ -17362,7 +17366,7 @@ function handleKeyPress(key) {
   }
 }
 
-/* ==================== Validar y Procesar la Palabra ==================== */
+// ==================== Validar y Procesar la Palabra ==================== 
 function checkWord() {
   const cells = document.querySelectorAll(".cell span");
   let word = "";
@@ -17431,7 +17435,7 @@ function processWord(inputWord) {
   saveDailyGameState();
 }
 
-/* ==================== Actualizar Color de Teclas ==================== */
+// ==================== Actualizar Color de Teclas ==================== 
 function updateKeyColor(keyEl, newStatus) {
   if (!keyEl) return;
   const priority = { unused: 0, absent: 1, present: 2, correct: 3 };
@@ -17445,7 +17449,7 @@ function updateKeyColor(keyEl, newStatus) {
   }
 }
 
-/* ==================== Funciones Auxiliares ==================== */
+// ==================== Funciones Auxiliares ==================== 
 function showMessage(msg) {
   const msgEl = document.getElementById("message");
   msgEl.innerText = msg;
@@ -17458,7 +17462,7 @@ function revealWord(text) {
   document.getElementById("reveal-word").innerText = text;
 }
 
-/* ==================== Reiniciar ==================== */
+// ==================== Reiniciar ==================== 
 function resetGame() {
   if (isDailyMode) {
     showMessage("El juego diario no se puede reiniciar.");
@@ -17473,14 +17477,15 @@ function resetGame() {
   });
 }
 
-/* ==================== Cambio de Modo ==================== */
+// ==================== Cambio de Modo ==================== 
 document.getElementById("modeToggle").addEventListener("click", function () {
   isDailyMode = !isDailyMode;
   this.textContent = isDailyMode ? "Modo Diario" : "Modo Normal";
+  localStorage.setItem(IS_DAILY_MODE_KEY_WORDLE, isDailyMode.toString());
   if (isDailyMode) {
     generateGrid();
     generateKeyboard();
-    const savedDailyWord = localStorage.getItem("dailyWord");
+    const savedDailyWord = localStorage.getItem(DAILY_WORD_KEY_WORDLE);
     if (savedDailyWord) {
       targetWord = savedDailyWord;
     }
@@ -17497,120 +17502,25 @@ document.getElementById("modeToggle").addEventListener("click", function () {
   }
 });
 
-
-// Ejemplo de agregar el listener sin DOMContentLoaded, asumiendo que el script se carga al final
+// ==================== Compartir Resultado ==================== 
 document.getElementById("share-button").addEventListener("click", shareResult);
-
 function shareResult() {
   if (!gameOver) {
     showMessage("Termina el juego para compartir el resultado.");
     return;
   }
-
   const today = new Date();
   const day = today.getDate();
   const monthNames = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
   const month = monthNames[today.getMonth()];
   const year = today.getFullYear().toString().substr(-2);
-  
   let shareText = "";
   if (isDailyMode) {
     const dateStr = `${day}-${month}-${year}`;
-    shareText = `Wordle (Gamesle) del dia ${dateStr}:\n`;
+    shareText = `Wordle (Gamesle) del día ${dateStr}:\n`;
   } else {
     shareText = "Wordle (Gamesle) random modo normal:\n";
   }
-
-  // Determinar cuántas filas se comparten (la fila actual si el juego terminó)
   const rowsToShare = gameOver ? currentRow + 1 : currentRow;
   const cells = document.querySelectorAll(".cell");
-  for (let row = 0; row < rowsToShare; row++) {
-    let rowResult = "";
-    for (let col = 0; col < 5; col++) {
-      const cellIndex = row * 5 + col;
-      const cell = cells[cellIndex];
-      if (cell) {
-        if (cell.classList.contains("correct")) {
-          rowResult += "🟩";
-        } else if (cell.classList.contains("present")) {
-          rowResult += "🟨";
-        } else if (cell.classList.contains("absent")) {
-          rowResult += "🟥";
-        } else {
-          rowResult += "⬜";
-        }
-      }
-    }
-    shareText += rowResult + "\n";
-  }
-
-  shareText += "\nhttps://gamesle.netlify.app/";
-
-  // Si es móvil, usamos WhatsApp, si no, usamos la API de Web Share o copiamos al portapapeles
-  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    const whatsappUrl = "whatsapp://send?text=" + encodeURIComponent(shareText);
-    window.open(whatsappUrl, "_blank");
-  } else if (navigator.share) {
-    navigator.share({
-      title: "Wordle (Gamesle)",
-      text: shareText,
-      url: "https://gamesle.netlify.app/"
-    })
-      .then(() => console.log("Compartido exitosamente"))
-      .catch(error => console.log("Error al compartir", error));
-  } else {
-    navigator.clipboard.writeText(shareText)
-      .then(() => {
-        showMessage("¡Resultado copiado al portapapeles!");
-      })
-      .catch(() => {
-        showMessage("Error al copiar el resultado.");
-      });
-  }
-}
-
-
-
-document.addEventListener("DOMContentLoaded", function () {
-  // Asignamos los listeners para historia, reinicio y teclas:
-  document.getElementById("toggle-history").addEventListener("click", toggleHistory);
-  document.getElementById("reset-game").addEventListener("click", resetGame);
-  document.addEventListener("keydown", (event) => {
-    handleKeyPress(event.key);
-  });
-
-  // Verificar si existe un juego diario guardado para hoy
-  const savedDailyGame = localStorage.getItem("dailyGameState");
-  const todayDate = new Date().toDateString();
-  if (savedDailyGame) {
-    const parsedState = JSON.parse(savedDailyGame);
-    if (parsedState.lastPlayedDate === todayDate) {
-      // Forzamos el modo diario si hay estado guardado del día de hoy
-      isDailyMode = true;
-      // Actualizamos el botón de modo (asegúrate de que el id coincide con el que usas)
-      document.getElementById("modeToggle").textContent = "Modo Diario";
-    }
-  }
-
-  // Primero generamos el grid y el teclado, para que existan en el DOM
-  generateGrid();
-  generateKeyboard();
-
-  if (isDailyMode) {
-    // Si estamos en modo diario, intentamos cargar el estado guardado
-    // Si loadDailyGameState() devuelve false, es que no hay estado guardado para hoy,
-    // por lo que seleccionamos la palabra y guardamos el estado.
-    if (!loadDailyGameState()) {
-      selectRandomWord();
-      saveDailyGameState();
-      // Después, volvemos a cargar el estado para actualizar la UI
-      loadDailyGameState();
-    }
-  } else {
-    // Modo normal: iniciamos un juego nuevo
-    selectRandomWord();
-    resetGame();
-  }
-  
-  updateHistoryDisplay();
-});
+  for (let row = 0; row < rows
