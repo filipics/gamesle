@@ -17569,9 +17569,8 @@ function shareResult() {
 
 
 
-
 document.addEventListener("DOMContentLoaded", function () {
-  // Asignar listeners a historia, reinicio y teclas:
+  // Asignamos los listeners para historia, reinicio y teclas:
   document.getElementById("toggle-history").addEventListener("click", toggleHistory);
   document.getElementById("reset-game").addEventListener("click", resetGame);
   document.addEventListener("keydown", (event) => {
@@ -17580,25 +17579,33 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Verificar si existe un juego diario guardado para hoy
   const savedDailyGame = localStorage.getItem("dailyGameState");
+  const todayDate = new Date().toDateString();
   if (savedDailyGame) {
     const parsedState = JSON.parse(savedDailyGame);
-    if (parsedState.lastPlayedDate === new Date().toDateString()) {
+    if (parsedState.lastPlayedDate === todayDate) {
       // Forzamos el modo diario si hay estado guardado del día de hoy
       isDailyMode = true;
-      // Actualizamos el botón de modo (asegúrate de que el id coincida con el HTML)
+      // Actualizamos el botón de modo (asegúrate de que el id coincide con el que usas)
       document.getElementById("modeToggle").textContent = "Modo Diario";
     }
   }
 
-  // **Primero generamos el grid y el teclado**
+  // Primero generamos el grid y el teclado, para que existan en el DOM
   generateGrid();
   generateKeyboard();
 
-  // Ahora, si estamos en modo diario y se puede cargar el estado, lo dejamos tal cual;
-  // de lo contrario, iniciamos un juego nuevo.
-  if (isDailyMode && loadDailyGameState()) {
-    // El estado diario se ha cargado y la UI ya refleja la partida guardada.
+  if (isDailyMode) {
+    // Si estamos en modo diario, intentamos cargar el estado guardado
+    // Si loadDailyGameState() devuelve false, es que no hay estado guardado para hoy,
+    // por lo que seleccionamos la palabra y guardamos el estado.
+    if (!loadDailyGameState()) {
+      selectRandomWord();
+      saveDailyGameState();
+      // Después, volvemos a cargar el estado para actualizar la UI
+      loadDailyGameState();
+    }
   } else {
+    // Modo normal: iniciamos un juego nuevo
     selectRandomWord();
     resetGame();
   }
