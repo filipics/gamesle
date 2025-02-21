@@ -198,7 +198,7 @@ const paises = [
 ];
 
 
-// Variables Globales
+// VARIABLES GLOBALES
 const intentosMaximos = 5;
 let intentos = 0;
 let historialIntentos = [];
@@ -207,14 +207,20 @@ let paisSecreto;
 let isDailyMode = false; // Por defecto, modo normal
 let gameOver = false;    // Indica si el juego terminó
 
-// Bloquear entradas tras finalizar el juego
+// CLAVES ÚNICAS PARA MUNDOLE EN LOCALSTORAGE
+const DAILY_GAME_STATE_KEY = "dailyGameStateMundole";
+const DAILY_COUNTRY_KEY = "dailyCountryMundole";
+const LAST_DAILY_DATE_KEY = "lastDailyDateMundole";
+const IS_DAILY_MODE_KEY = "isDailyModeMundole";
+
+// BLOQUEAR ENTRADAS
 function bloquearEntradas() {
   document.getElementById("guess").disabled = true;
   document.getElementById("enviar-intento").disabled = true;
   gameOver = true;
 }
 
-// Función para generar un hash numérico a partir de un string
+// FUNCIÓN PARA GENERAR UN HASH NUMÉRICO A PARTIR DE UN STRING
 function hashCode(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -223,9 +229,9 @@ function hashCode(str) {
   return hash;
 }
 
-// Cargar estado del juego diario desde localStorage
+// CARGAR ESTADO DEL JUEGO DIARIO DESDE LOCALSTORAGE
 function loadDailyGameState() {
-  const savedState = localStorage.getItem("dailyGameState");
+  const savedState = localStorage.getItem(DAILY_GAME_STATE_KEY);
   if (savedState) {
     const state = JSON.parse(savedState);
     // Verificamos que la fecha guardada sea la de hoy
@@ -245,7 +251,7 @@ function loadDailyGameState() {
   return false;
 }
 
-// Guardar estado del juego diario en localStorage
+// GUARDAR ESTADO DEL JUEGO DIARIO EN LOCALSTORAGE
 function saveDailyGameState() {
   if (isDailyMode) {
     const state = {
@@ -256,11 +262,11 @@ function saveDailyGameState() {
       gameOver: document.getElementById("guess").disabled && document.getElementById("enviar-intento").disabled,
       lastDailyDate: new Date().toDateString()
     };
-    localStorage.setItem("dailyGameState", JSON.stringify(state));
+    localStorage.setItem(DAILY_GAME_STATE_KEY, JSON.stringify(state));
   }
 }
 
-// Historial de partidas
+// HISTORIAL DE PARTIDAS
 function cargarHistorialPartidas() {
   const partidasGuardadas = localStorage.getItem("historialPartidas");
   if (partidasGuardadas) {
@@ -286,7 +292,7 @@ function actualizarHistorialIntentos() {
   });
 }
 
-// Verificar si la imagen existe
+// VERIFICAR SI LA IMAGEN EXISTE
 function imagenExiste(url) {
   return new Promise((resolve) => {
     const img = new Image();
@@ -296,19 +302,19 @@ function imagenExiste(url) {
   });
 }
 
-// Elegir un país secreto
+// ELEGIR UN PAÍS SECRETO
 async function elegirPaisSecreto() {
   if (isDailyMode) {
     const todayDate = new Date().toDateString();
-    const savedDailyCountry = localStorage.getItem("dailyCountry");
-    const savedDailyDate = localStorage.getItem("lastDailyDate");
+    const savedDailyCountry = localStorage.getItem(DAILY_COUNTRY_KEY);
+    const savedDailyDate = localStorage.getItem(LAST_DAILY_DATE_KEY);
     if (savedDailyCountry && savedDailyDate === todayDate) {
       return JSON.parse(savedDailyCountry);
     } else {
       let index = Math.abs(hashCode(todayDate)) % paises.length;
       let chosenCountry = paises[index];
-      localStorage.setItem("dailyCountry", JSON.stringify(chosenCountry));
-      localStorage.setItem("lastDailyDate", todayDate);
+      localStorage.setItem(DAILY_COUNTRY_KEY, JSON.stringify(chosenCountry));
+      localStorage.setItem(LAST_DAILY_DATE_KEY, todayDate);
       return chosenCountry;
     }
   } else {
@@ -320,7 +326,7 @@ async function elegirPaisSecreto() {
   }
 }
 
-// Iniciar un nuevo juego
+// INICIAR UN NUEVO JUEGO
 async function iniciarJuego() {
   if (!isDailyMode) {
     gameOver = false;
@@ -329,7 +335,7 @@ async function iniciarJuego() {
   historialIntentos = [];
   actualizarHistorialIntentos();
   if (isDailyMode && loadDailyGameState()) {
-    // Estado diario cargado: la UI ya refleja la partida guardada
+    // Estado diario cargado: la UI ya refleja la partida guardada.
   } else {
     paisSecreto = await elegirPaisSecreto();
     document.getElementById("country-image").src = paisSecreto.image;
@@ -342,12 +348,12 @@ async function iniciarJuego() {
   document.getElementById("reiniciar").disabled = isDailyMode ? true : false;
 }
 
-// Proyección de Mercator
+// PROYECCIÓN DE MERCATOR
 function mercatorProjection(lat, lon) {
   const rad = Math.PI / 180;
   return { x: lon * rad, y: Math.log(Math.tan(Math.PI / 4 + (lat * rad) / 2)) };
 }
-// Calcular distancia usando Mercator
+// CALCULAR DISTANCIA CON MERCATOR
 function calcularDistanciaPlanisferio(lat1, lon1, lat2, lon2) {
   const R = 6371;
   const p1 = mercatorProjection(lat1, lon1);
@@ -355,7 +361,7 @@ function calcularDistanciaPlanisferio(lat1, lon1, lat2, lon2) {
   const dx = p2.x - p1.x, dy = p2.y - p1.y;
   return Math.sqrt(dx * dx + dy * dy) * R;
 }
-// Calcular dirección con tolerancia
+// CALCULAR DIRECCIÓN CON TOLERANCIA
 function calcularDireccion(lat1, lon1, lat2, lon2) {
   let dLat = lat1 - lat2, dLon = lon1 - lon2;
   let angulo = Math.atan2(dLon, dLat) * (180 / Math.PI);
@@ -369,7 +375,7 @@ function calcularDireccion(lat1, lon1, lat2, lon2) {
   if (angulo >= 190 && angulo < 260) return "NE";
   return "SE";
 }
-// Manejar intento del jugador
+// MANEJAR UN INTENTO DEL JUGADOR
 function realizarIntento() {
   if (gameOver) return;
   let paisIntento = document.getElementById("guess").value.trim();
@@ -413,7 +419,7 @@ function realizarIntento() {
     if (isDailyMode) saveDailyGameState();
   }
 }
-// Función para reiniciar (solo modo normal)
+// REINICIAR (solo modo normal)
 function reiniciarJuego() {
   if (isDailyMode) {
     document.getElementById("feedback").textContent = "El juego diario no se puede reiniciar.";
@@ -423,8 +429,7 @@ function reiniciarJuego() {
   document.getElementById("enviar-intento").disabled = false;
   iniciarJuego();
 }
-
-// Autocompletar países
+// AUTOCOMPLETAR PAÍSES
 document.getElementById("guess").addEventListener("input", function () {
   let input = this.value.toLowerCase();
   let suggestions = document.getElementById("suggestions");
@@ -446,17 +451,16 @@ document.getElementById("guess").addEventListener("input", function () {
   });
   suggestions.style.display = coincidencias.length > 0 ? "block" : "none";
 });
-
-// Asignar eventos a botones
+// ASIGNAR EVENTOS A BOTONES
 document.getElementById("enviar-intento").addEventListener("click", realizarIntento);
 document.getElementById("reiniciar").addEventListener("click", reiniciarJuego);
 document.getElementById("modo-juego").addEventListener("click", function () {
   isDailyMode = !isDailyMode;
   this.textContent = isDailyMode ? "Modo Diario" : "Modo Normal";
+  localStorage.setItem(IS_DAILY_MODE_KEY, isDailyMode.toString());
   iniciarJuego();
 });
-
-// Función para compartir el resultado del modo diario
+// COMPARTIR RESULTADO DIARIO
 function shareDailyResult() {
   if (!isDailyMode) {
     showMessage("Solo se puede compartir el resultado en modo diario.");
@@ -498,8 +502,7 @@ function shareDailyResult() {
       });
   }
 }
-
-// Función auxiliar para mostrar mensajes
+// MENSAJES
 function showMessage(msg) {
   const msgEl = document.getElementById("message");
   msgEl.innerText = msg;
@@ -507,11 +510,15 @@ function showMessage(msg) {
     msgEl.innerText = "";
   }, 2000);
 }
-
-// Inicialización al cargar la página
+// INICIALIZACIÓN AL CARGAR LA PÁGINA
 document.addEventListener("DOMContentLoaded", async function () {
   cargarHistorialPartidas();
-  const savedDailyGame = localStorage.getItem("dailyGameState");
+  const storedMode = localStorage.getItem(IS_DAILY_MODE_KEY);
+  if (storedMode === "true") {
+    isDailyMode = true;
+    document.getElementById("modo-juego").textContent = "Modo Diario";
+  }
+  const savedDailyGame = localStorage.getItem(DAILY_GAME_STATE_KEY);
   const todayDate = new Date().toDateString();
   if (savedDailyGame) {
     const parsedState = JSON.parse(savedDailyGame);
