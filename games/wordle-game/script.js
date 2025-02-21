@@ -1,18 +1,3 @@
-/* ==================== Variables Globales ==================== */
-let currentRow = 0;
-let currentCol = 0;
-let gameOver = false;
-const maxAttempts = 6;
-const allowedLetters = "qwertyuiopasdfghjklñzxcvbnm";
-let targetWord = "";
-let isDailyMode = false;
-let guessedWords = [];
-
-/* ==================== Listas de Palabras y Utilidades ==================== */
-function removeAccents(word) {
-  return word.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-}
-
 
 
 // 📌 Lista de palabras para elegir la palabra del día
@@ -17131,6 +17116,23 @@ function removeAccents(word) {
         "zuros",
         "zuzos"
     ].map(word => removeAccents(word));
+
+
+/* ==================== Variables Globales ==================== */
+let currentRow = 0;
+let currentCol = 0;
+let gameOver = false;
+const maxAttempts = 6;
+const allowedLetters = "qwertyuiopasdfghjklñzxcvbnm";
+let targetWord = "";
+let isDailyMode = false;
+let guessedWords = [];
+
+/* ==================== Listas de Palabras y Utilidades ==================== */
+function removeAccents(word) {
+  return word.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
 
 /* ==================== Estado del Juego Diario (LocalStorage) ==================== */
 function loadDailyGameState() {
