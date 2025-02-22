@@ -1,116 +1,136 @@
-// Game configuration
-const targetEquation = "4+3=7"; // Set the target equation here
-const maxAttempts = 6;
-let attempts = 0;
+document.addEventListener('DOMContentLoaded', function() {
+  // Lista de ecuaciones de ejemplo (puedes ampliarla o generar ecuaciones dinámicamente)
+  const equations = ["4+3=7", "2*3=6", "8-5=3", "9/3=3", "1+4=5", "7-2=5", "6+2=8"];
+  // Seleccionar una ecuación al azar
+  const targetEquation = equations[Math.floor(Math.random() * equations.length)];
+  const maxAttempts = 6;
+  let attempts = 0;
 
-// DOM elements
-const board = document.getElementById("board");
-const input = document.getElementById("guess-input");
-const message = document.getElementById("message");
-const submitBtn = document.getElementById("submit-btn");
+  // Elementos del DOM
+  const board = document.getElementById("board");
+  const input = document.getElementById("guess-input");
+  const message = document.getElementById("message");
+  const submitBtn = document.getElementById("submit-btn");
+  const newGameBtn = document.getElementById("new-game-btn");
 
-// Ensure input length matches the target equation length
-input.maxLength = targetEquation.length;
+  // Ajustar la longitud máxima del input según la ecuación objetivo
+  input.maxLength = targetEquation.length;
 
-submitBtn.addEventListener("click", () => {
-  const guess = input.value.trim();
+  // Enviar con botón y con la tecla Enter
+  submitBtn.addEventListener("click", handleSubmit);
+  input.addEventListener("keyup", function(e) {
+    if (e.key === "Enter") {
+      handleSubmit();
+    }
+  });
 
-  // Check guess length
-  if (guess.length !== targetEquation.length) {
-    message.textContent = `Equation must be ${targetEquation.length} characters long.`;
-    return;
+  // Reiniciar juego
+  newGameBtn.addEventListener("click", function() {
+    window.location.reload();
+  });
+
+  function handleSubmit() {
+    const guess = input.value.trim();
+
+    // Verificar la longitud del guess
+    if (guess.length !== targetEquation.length) {
+      message.textContent = `La ecuación debe tener ${targetEquation.length} caracteres.`;
+      return;
+    }
+
+    // Verificar el formato: exactamente un '='
+    if (!isValidFormat(guess)) {
+      message.textContent = `La ecuación debe contener exactamente un '='.`;
+      return;
+    }
+
+    // Verificar que la ecuación sea matemáticamente válida
+    if (!evaluateEquation(guess)) {
+      message.textContent = `La ecuación no es matemáticamente válida.`;
+      return;
+    }
+
+    attempts++;
+    const feedback = getFeedback(guess, targetEquation);
+    addGuessToBoard(guess, feedback);
+
+    if (guess === targetEquation) {
+      message.textContent = "¡Felicidades! ¡Has resuelto la ecuación!";
+      endGame();
+    } else if (attempts >= maxAttempts) {
+      message.textContent = `¡Juego terminado! La ecuación correcta era ${targetEquation}.`;
+      endGame();
+    } else {
+      message.textContent = `Intento ${attempts} de ${maxAttempts}.`;
+    }
+
+    input.value = "";
+    input.focus();
   }
 
-  // Check format: exactly one '=' sign
-  if (!isValidFormat(guess)) {
-    message.textContent = `Equation must contain one '=' sign.`;
-    return;
+  // Verificar que la ecuación contenga exactamente un '='
+  function isValidFormat(eq) {
+    return (eq.split("=").length - 1) === 1;
   }
 
-  // Validate the mathematical equation
-  if (!evaluateEquation(guess)) {
-    message.textContent = `The equation is not mathematically valid.`;
-    return;
+  // Evaluar si la parte izquierda es igual a la parte derecha
+  function evaluateEquation(eq) {
+    const parts = eq.split("=");
+    if (parts.length !== 2) return false;
+    try {
+      const left = eval(parts[0]);
+      const right = eval(parts[1]);
+      return left === right;
+    } catch (error) {
+      return false;
+    }
   }
 
-  attempts++;
-  const feedback = getFeedback(guess, targetEquation);
-  addGuessToBoard(guess, feedback);
+  // Obtener retroalimentación para cada carácter (verde, amarillo, gris)
+  function getFeedback(guess, target) {
+    let feedback = new Array(guess.length).fill("gray");
+    let targetChars = target.split("");
+    let guessChars = guess.split("");
 
-  if (guess === targetEquation) {
-    message.textContent = "Congratulations! You solved it!";
-    endGame();
-  } else if (attempts >= maxAttempts) {
-    message.textContent = `Game Over! The correct equation was ${targetEquation}.`;
-    endGame();
-  } else {
-    message.textContent = `Attempt ${attempts} of ${maxAttempts}.`;
+    // Primera pasada: caracteres correctos en la posición correcta (verde)
+    for (let i = 0; i < guessChars.length; i++) {
+      if (guessChars[i] === targetChars[i]) {
+        feedback[i] = "green";
+        targetChars[i] = null; // Quitar el carácter ya usado
+      }
+    }
+
+    // Segunda pasada: caracteres presentes pero en posición distinta (amarillo)
+    for (let i = 0; i < guessChars.length; i++) {
+      if (feedback[i] === "green") continue;
+      let index = targetChars.indexOf(guessChars[i]);
+      if (index !== -1) {
+        feedback[i] = "yellow";
+        targetChars[index] = null;
+      }
+    }
+
+    return feedback;
   }
 
-  input.value = "";
-  input.focus();
+  // Añadir la fila del guess en el tablero con la retroalimentación de colores
+  function addGuessToBoard(guess, feedback) {
+    const row = document.createElement("div");
+    row.className = "row";
+    for (let i = 0; i < guess.length; i++) {
+      const cell = document.createElement("div");
+      cell.className = "cell " + feedback[i];
+      cell.textContent = guess[i];
+      row.appendChild(cell);
+    }
+    board.appendChild(row);
+  }
+
+  // Finalizar el juego deshabilitando la entrada y mostrando el botón de reinicio
+  function endGame() {
+    submitBtn.disabled = true;
+    input.disabled = true;
+    newGameBtn.style.display = "inline-block";
+  }
 });
 
-// Check that the equation contains exactly one '='
-function isValidFormat(eq) {
-  return (eq.split("=").length - 1) === 1;
-}
-
-// Evaluate whether the left-hand side equals the right-hand side
-function evaluateEquation(eq) {
-  const parts = eq.split("=");
-  if (parts.length !== 2) return false;
-  try {
-    const left = eval(parts[0]);
-    const right = eval(parts[1]);
-    return left === right;
-  } catch (error) {
-    return false;
-  }
-}
-
-// Compare the guess to the target and return feedback for each character
-function getFeedback(guess, target) {
-  let feedback = new Array(guess.length).fill("gray");
-  let targetChars = target.split("");
-  let guessChars = guess.split("");
-
-  // First pass: mark characters in the correct position (green)
-  for (let i = 0; i < guessChars.length; i++) {
-    if (guessChars[i] === targetChars[i]) {
-      feedback[i] = "green";
-      targetChars[i] = null; // Remove matched character
-    }
-  }
-
-  // Second pass: mark characters that exist in target but in a different position (yellow)
-  for (let i = 0; i < guessChars.length; i++) {
-    if (feedback[i] === "green") continue;
-    let index = targetChars.indexOf(guessChars[i]);
-    if (index !== -1) {
-      feedback[i] = "yellow";
-      targetChars[index] = null;
-    }
-  }
-
-  return feedback;
-}
-
-// Add the guess row with color-coded cells to the board
-function addGuessToBoard(guess, feedback) {
-  const row = document.createElement("div");
-  row.className = "row";
-  for (let i = 0; i < guess.length; i++) {
-    const cell = document.createElement("div");
-    cell.className = "cell " + feedback[i];
-    cell.textContent = guess[i];
-    row.appendChild(cell);
-  }
-  board.appendChild(row);
-}
-
-// Disable further input when the game ends
-function endGame() {
-  submitBtn.disabled = true;
-  input.disabled = true;
-}
