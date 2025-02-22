@@ -1,193 +1,381 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Equationle - Math Puzzle Game</title>
+  <meta charset="UTF-8" />
+  <title>Nerdle Clone</title>
   <style>
-    /* Basic reset and styling */
+    /* ----- ESTILOS GENERALES ----- */
+    * {
+      box-sizing: border-box;
+    }
     body {
-      font-family: Arial, sans-serif;
-      text-align: center;
       margin: 0;
-      padding: 20px;
-      background-color: #f0f0f0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #121213;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    #game {
-      max-width: 400px;
-      margin: 0 auto;
+    h1 {
+      margin: 20px 0 10px 0;
+      font-size: 2rem;
     }
-    #board {
+    #info {
+      margin-bottom: 10px;
+      font-size: 0.9rem;
+      color: #bbb;
+      max-width: 90%;
+      text-align: center;
+    }
+    #message {
+      height: 1.5em;
+      margin-top: 10px;
+      font-weight: bold;
+      text-align: center;
+      min-height: 24px;
+    }
+
+    /* ----- CONTENEDOR DEL JUEGO ----- */
+    #game-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       margin-bottom: 20px;
     }
-    .row {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 5px;
+
+    /* ----- TABLERO (6 filas x 8 columnas) ----- */
+    #board {
+      display: grid;
+      grid-template-rows: repeat(6, 50px);
+      grid-gap: 5px;
+      margin-bottom: 20px;
+    }
+    .board-row {
+      display: grid;
+      grid-template-columns: repeat(8, 50px);
+      gap: 5px;
     }
     .cell {
-      width: 40px;
-      height: 40px;
-      border: 2px solid #ccc;
-      margin: 2px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
+      width: 50px;
+      height: 50px;
+      border: 2px solid #3a3a3c;
+      font-size: 1.5rem;
       font-weight: bold;
+      text-transform: uppercase;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #121213;
+      transition: background-color 0.3s;
     }
-    .green {
-      background-color: #6aaa64;
-      border-color: #6aaa64;
-      color: white;
+
+    /* Colores de retroalimentación (Nerdle-like) */
+    .correct {
+      background-color: #00cc88 !important; /* Verde */
+      border-color: #00cc88 !important;
+      color: #ffffff;
     }
-    .yellow {
-      background-color: #c9b458;
-      border-color: #c9b458;
-      color: white;
+    .present {
+      background-color: #b49f39 !important; /* Amarillo/Dorado */
+      border-color: #b49f39 !important;
+      color: #ffffff;
     }
-    .gray {
-      background-color: #787c7e;
-      border-color: #787c7e;
-      color: white;
+    .absent {
+      background-color: #3a3a3c !important; /* Gris/Negro */
+      border-color: #3a3a3c !important;
+      color: #ffffff;
     }
-    input {
-      padding: 10px;
-      font-size: 18px;
-      width: 100%;
-      box-sizing: border-box;
-      margin-bottom: 10px;
+
+    /* ----- TECLADO EN PANTALLA ----- */
+    #keyboard {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 5px;
+      max-width: 500px;
+      margin: 0 auto;
     }
-    button {
-      padding: 10px 20px;
-      font-size: 18px;
+    .key {
+      background-color: #818384;
+      color: #ffffff;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-weight: bold;
+      padding: 10px 0;
       cursor: pointer;
+      text-transform: uppercase;
+    }
+    .key:hover {
+      filter: brightness(110%);
+    }
+    .wide-key {
+      grid-column: span 2;
+    }
+
+    /* Ajuste para dispositivos pequeños */
+    @media (max-width: 480px) {
+      #board {
+        grid-gap: 3px;
+      }
+      .board-row {
+        grid-template-columns: repeat(8, 40px);
+      }
+      .cell {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+      }
+      #keyboard {
+        grid-template-columns: repeat(5, 1fr);
+      }
+      .wide-key {
+        grid-column: span 5;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Equationle: Math Puzzle Game</h1>
-  <div id="game">
-    <div id="board"></div>
-    <input type="text" id="guess-input" placeholder="Enter equation (e.g., 4+3=7)" />
-    <button id="submit-btn">Submit</button>
-    <p id="message"></p>
+  <h1>Nerdle Clone</h1>
+  <div id="info">
+    ¡Adivina la ecuación de 8 caracteres en 6 intentos! Debe incluir un “=” y ser matemáticamente válida.
   </div>
+
+  <div id="game-container">
+    <!-- Tablero de 6 filas x 8 columnas -->
+    <div id="board"></div>
+
+    <!-- Mensaje de estado (errores, aciertos, etc.) -->
+    <div id="message"></div>
+
+    <!-- Teclado en pantalla -->
+    <div id="keyboard"></div>
+  </div>
+
   <script>
-    // Game configuration
-    const targetEquation = "4+3=7"; // Set the target equation here
-    const maxAttempts = 6;
-    let attempts = 0;
+    /********************************************************
+     *            CONFIGURACIÓN DEL JUEGO
+     ********************************************************/
+    const MAX_ATTEMPTS = 6;
+    const EQUATION_LENGTH = 8;
+    let currentAttempt = 0;
+    let currentGuess = "";
 
-    // DOM elements
+    // Lista de ecuaciones válidas (ejemplo).  
+    // Puedes ampliarla o generar dinámicamente.
+    const equations = [
+      "1+3=4",
+      "2+5=7",
+      "2*3=6",
+      "9-2=7",
+      "3*4=12",
+      "12/3=4",
+      "10-3=7",
+      "2+2=4",
+      "1+4=5",
+      "5*3=15",
+      "12-4=8",
+      "15/3=5"
+    ].filter(eq => eq.length === EQUATION_LENGTH);
+
+    // Seleccionamos aleatoriamente una ecuación de 8 caracteres
+    const targetEquation = equations[Math.floor(Math.random() * equations.length)];
+
+    /********************************************************
+     *            INICIALIZACIÓN DEL TABLERO
+     ********************************************************/
     const board = document.getElementById("board");
-    const input = document.getElementById("guess-input");
-    const message = document.getElementById("message");
-    const submitBtn = document.getElementById("submit-btn");
-
-    // Ensure input length matches the target equation length
-    input.maxLength = targetEquation.length;
-
-    submitBtn.addEventListener("click", () => {
-      const guess = input.value.trim();
-
-      // Check guess length
-      if (guess.length !== targetEquation.length) {
-        message.textContent = `Equation must be ${targetEquation.length} characters long.`;
-        return;
+    for (let row = 0; row < MAX_ATTEMPTS; row++) {
+      const rowDiv = document.createElement("div");
+      rowDiv.classList.add("board-row");
+      for (let col = 0; col < EQUATION_LENGTH; col++) {
+        const cellDiv = document.createElement("div");
+        cellDiv.classList.add("cell");
+        cellDiv.setAttribute("id", `cell-${row}-${col}`);
+        rowDiv.appendChild(cellDiv);
       }
-
-      // Check format: exactly one '=' sign
-      if (!isValidFormat(guess)) {
-        message.textContent = `Equation must contain one '=' sign.`;
-        return;
-      }
-
-      // Validate the mathematical equation
-      if (!evaluateEquation(guess)) {
-        message.textContent = `The equation is not mathematically valid.`;
-        return;
-      }
-
-      attempts++;
-      const feedback = getFeedback(guess, targetEquation);
-      addGuessToBoard(guess, feedback);
-
-      if (guess === targetEquation) {
-        message.textContent = "Congratulations! You solved it!";
-        endGame();
-      } else if (attempts >= maxAttempts) {
-        message.textContent = `Game Over! The correct equation was ${targetEquation}.`;
-        endGame();
-      } else {
-        message.textContent = `Attempt ${attempts} of ${maxAttempts}.`;
-      }
-
-      input.value = "";
-      input.focus();
-    });
-
-    // Check that the equation contains exactly one '='
-    function isValidFormat(eq) {
-      return (eq.split("=").length - 1) === 1;
+      board.appendChild(rowDiv);
     }
 
-    // Evaluate whether the left-hand side equals the right-hand side
-    function evaluateEquation(eq) {
+    /********************************************************
+     *            CREACIÓN DEL TECLADO EN PANTALLA
+     ********************************************************/
+    const keyboardLayout = [
+      "7","8","9","/","*",
+      "4","5","6","+","-",
+      "1","2","3","=","0",
+      "enter","delete"
+    ];
+    const keyboard = document.getElementById("keyboard");
+
+    keyboardLayout.forEach((key) => {
+      const keyBtn = document.createElement("button");
+      keyBtn.textContent = key.toUpperCase();
+      keyBtn.classList.add("key");
+
+      // Para las teclas "enter" y "delete" que ocupan más espacio
+      if (key === "enter" || key === "delete") {
+        keyBtn.classList.add("wide-key");
+      }
+
+      keyBtn.addEventListener("click", () => handleKeyClick(key));
+      keyboard.appendChild(keyBtn);
+    });
+
+    /********************************************************
+     *            MANEJO DE EVENTOS DE TECLADO
+     ********************************************************/
+    // Permitir también escribir con teclado físico
+    document.addEventListener("keydown", (e) => {
+      const key = e.key.toLowerCase();
+
+      // Filtramos las teclas permitidas
+      if (
+        (/[0-9]/.test(key) && key.length === 1) ||
+        ["+", "-", "*", "/", "="].includes(key)
+      ) {
+        addCharacter(key);
+      } else if (key === "enter") {
+        checkGuess();
+      } else if (key === "backspace" || key === "delete") {
+        deleteCharacter();
+      }
+    });
+
+    function handleKeyClick(key) {
+      if (key === "enter") {
+        checkGuess();
+      } else if (key === "delete") {
+        deleteCharacter();
+      } else {
+        addCharacter(key);
+      }
+    }
+
+    /********************************************************
+     *            FUNCIONES PRINCIPALES
+     ********************************************************/
+    function addCharacter(char) {
+      if (currentGuess.length < EQUATION_LENGTH) {
+        currentGuess += char;
+        updateBoard();
+      }
+    }
+
+    function deleteCharacter() {
+      if (currentGuess.length > 0) {
+        currentGuess = currentGuess.slice(0, -1);
+        updateBoard();
+      }
+    }
+
+    function updateBoard() {
+      // Rellenar la fila actual con el guess
+      for (let i = 0; i < EQUATION_LENGTH; i++) {
+        const cell = document.getElementById(`cell-${currentAttempt}-${i}`);
+        cell.textContent = currentGuess[i] || "";
+      }
+    }
+
+    function checkGuess() {
+      const message = document.getElementById("message");
+
+      // Validar longitud
+      if (currentGuess.length < EQUATION_LENGTH) {
+        message.textContent = "La ecuación debe tener 8 caracteres.";
+        return;
+      }
+
+      // Validar que haya un '='
+      if (!currentGuess.includes("=")) {
+        message.textContent = "Debe incluir un signo '='.";
+        return;
+      }
+
+      // Validar que sea matemáticamente correcta
+      if (!isValidEquation(currentGuess)) {
+        message.textContent = "La ecuación no es matemáticamente válida.";
+        return;
+      }
+
+      // Si pasa todas las validaciones, coloreamos la fila
+      const feedback = getFeedback(currentGuess, targetEquation);
+      paintRow(feedback);
+
+      // Verificamos si acertó
+      if (currentGuess === targetEquation) {
+        message.textContent = "¡Correcto! ¡Has ganado!";
+        endGame();
+        return;
+      }
+
+      currentAttempt++;
+      currentGuess = "";
+      message.textContent = "";
+
+      if (currentAttempt === MAX_ATTEMPTS) {
+        message.textContent = `¡Fin del juego! La ecuación correcta era: ${targetEquation}`;
+        endGame();
+      }
+    }
+
+    // Función para verificar validez de la ecuación
+    function isValidEquation(eq) {
       const parts = eq.split("=");
       if (parts.length !== 2) return false;
       try {
         const left = eval(parts[0]);
         const right = eval(parts[1]);
         return left === right;
-      } catch (error) {
+      } catch (err) {
         return false;
       }
     }
 
-    // Compare the guess to the target and return feedback for each character
+    // Obtener retroalimentación estilo Wordle/Nerdle
     function getFeedback(guess, target) {
-      let feedback = new Array(guess.length).fill("gray");
-      let targetChars = target.split("");
-      let guessChars = guess.split("");
+      const feedback = Array(EQUATION_LENGTH).fill("absent");
+      const targetArr = target.split("");
+      const guessArr = guess.split("");
 
-      // First pass: mark characters in the correct position (green)
-      for (let i = 0; i < guessChars.length; i++) {
-        if (guessChars[i] === targetChars[i]) {
-          feedback[i] = "green";
-          targetChars[i] = null; // Remove matched character
+      // 1) Marcar posiciones correctas
+      for (let i = 0; i < EQUATION_LENGTH; i++) {
+        if (guessArr[i] === targetArr[i]) {
+          feedback[i] = "correct";
+          targetArr[i] = null; // se “consume” ese carácter
         }
       }
 
-      // Second pass: mark characters that exist in target but in a different position (yellow)
-      for (let i = 0; i < guessChars.length; i++) {
-        if (feedback[i] === "green") continue;
-        let index = targetChars.indexOf(guessChars[i]);
-        if (index !== -1) {
-          feedback[i] = "yellow";
-          targetChars[index] = null;
+      // 2) Marcar caracteres presentes pero en otra posición
+      for (let i = 0; i < EQUATION_LENGTH; i++) {
+        if (feedback[i] === "correct") continue;
+        const idx = targetArr.indexOf(guessArr[i]);
+        if (idx !== -1) {
+          feedback[i] = "present";
+          targetArr[idx] = null; // se “consume” el carácter
         }
       }
 
       return feedback;
     }
 
-    // Add the guess row with color-coded cells to the board
-    function addGuessToBoard(guess, feedback) {
-      const row = document.createElement("div");
-      row.className = "row";
-      for (let i = 0; i < guess.length; i++) {
-        const cell = document.createElement("div");
-        cell.className = "cell " + feedback[i];
-        cell.textContent = guess[i];
-        row.appendChild(cell);
+    // Pintar la fila actual con la retroalimentación de colores
+    function paintRow(feedback) {
+      for (let i = 0; i < EQUATION_LENGTH; i++) {
+        const cell = document.getElementById(`cell-${currentAttempt}-${i}`);
+        cell.classList.remove("correct", "present", "absent");
+        cell.classList.add(feedback[i]);
       }
-      board.appendChild(row);
     }
 
-    // Disable further input when the game ends
+    // Finalizar el juego: deshabilitar el teclado
     function endGame() {
-      submitBtn.disabled = true;
-      input.disabled = true;
+      const keys = document.querySelectorAll(".key");
+      keys.forEach((key) => {
+        key.disabled = true;
+      });
+      document.removeEventListener("keydown", handleKeyClick);
     }
   </script>
 </body>
