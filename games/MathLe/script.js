@@ -7,7 +7,7 @@ function generateEquation() {
     // Para suma: A entre 10 y 89; B entre 10 y (99 - A)
     A = Math.floor(Math.random() * (89 - 10 + 1)) + 10; // [10, 89]
     const maxB = 99 - A;
-    if (maxB < 10) return generateEquation(); // reintentar si no hay rango válido
+    if (maxB < 10) return generateEquation(); // Reintentar si no hay rango válido
     B = Math.floor(Math.random() * (maxB - 10 + 1)) + 10; // [10, maxB]
     C = A + B;
     if (C < 10 || C > 99) return generateEquation(); // Asegurar que C tenga 2 dígitos
@@ -32,16 +32,16 @@ let gameOver = false;
 let targetEquation = "";
 let isDailyMode = false;  // false = modo normal, true = modo diario
 
-// Para almacenar el estado del juego diario en localStorage
+// Constantes para el estado diario (podrías eliminar las que no uses)
 const DAILY_GAME_STATE_KEY = "dailyGameStateNerdle";
-const DAILY_EQUATION_KEY = "dailyEquationNerdle";
-const LAST_PLAYED_DATE_KEY = "lastPlayedDateNerdle";
+// Nota: DAILY_EQUATION_KEY y LAST_PLAYED_DATE_KEY no se usan actualmente
 
-// Teclado virtual: 3 filas
+// Teclado virtual: si solo se usan "+" y "-", se podría restringir:
 const numberKeys = ["1","2","3","4","5","6","7","8","9","0"];
-const operatorKeys = ["+", "-", "*", "/", "="];
+const operatorKeys = ["+", "-", /*"*", "/"*/, "="]; // Puedes quitar "*" y "/" si no se usan
 const specialKeys = ["enter", "delete"];
-const allowedChars = "0123456789+-*/=";
+// Si decides restringir, allowedChars puede ser:
+const allowedChars = "0123456789+-=";
 
 /**************** DOM Elements ****************/
 const boardElement = document.getElementById("board");
@@ -157,7 +157,6 @@ function showMessage(msg) {
 }
 
 /**************** Validación y Feedback ****************/
-// Evalúa si la ecuación es matemáticamente válida (usa eval; en producción usar un parser seguro)
 function isValidEquation(eq) {
   if (!eq.includes("=")) return false;
   const parts = eq.split("=");
@@ -171,7 +170,6 @@ function isValidEquation(eq) {
   }
 }
 
-// Genera feedback al estilo Wordle (correcto, presente, ausente)
 function getFeedback(guess, target) {
   let feedback = new Array(EQUATION_LENGTH).fill("absent");
   let targetArr = target.split("");
@@ -196,7 +194,6 @@ function getFeedback(guess, target) {
   return feedback;
 }
 
-// Colorea la fila actual según el feedback obtenido
 function paintRow(feedback) {
   for (let i = 0; i < EQUATION_LENGTH; i++) {
     const cell = document.getElementById(`cell-${currentRow}-${i}`);
@@ -206,7 +203,6 @@ function paintRow(feedback) {
   }
 }
 
-// Actualiza el color de las teclas virtuales (evitando degradarlas)
 function updateKeyboardColors(guess, feedback) {
   for (let i = 0; i < EQUATION_LENGTH; i++) {
     const keyChar = guess[i];
@@ -257,7 +253,6 @@ function checkEquation() {
   const feedback = getFeedback(guess, targetEquation);
   paintRow(feedback);
   updateKeyboardColors(guess, feedback);
-  // Mostrar en consola el resultado del intento
   console.log(`Resultado intento ${currentRow + 1}: ${guess.toUpperCase()} | Target: ${targetEquation.toUpperCase()}`);
   if (guess === targetEquation) {
     showMessage("¡Correcto! Has ganado.");
@@ -277,13 +272,11 @@ function checkEquation() {
   if (isDailyMode) saveDailyGameState();
 }
 
-/**************** Función para Deshabilitar el Teclado ****************/
 function disableKeyboard() {
   document.querySelectorAll(".key").forEach(key => key.disabled = true);
 }
 
 /**************** Funciones de Reinicio y Modo Diario ****************/
-// Reinicia el juego (modo normal)
 function restartGame() {
   if (isDailyMode) {
     showMessage("El juego diario no se puede reiniciar.");
@@ -298,7 +291,6 @@ function restartGame() {
   console.log("Nuevo target (modo normal):", targetEquation);
 }
 
-// Carga o crea el estado diario en localStorage
 function loadDailyGameState() {
   const savedState = localStorage.getItem(DAILY_GAME_STATE_KEY);
   if (savedState) {
@@ -374,7 +366,6 @@ function saveDailyGameState() {
   console.log("Estado diario guardado:", state);
 }
 
-/**************** Función Hash (opcional, para futuros usos) ****************/
 function hashCode(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -421,4 +412,3 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 });
-
