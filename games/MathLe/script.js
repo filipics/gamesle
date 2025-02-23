@@ -19,7 +19,7 @@ function generateEquation() {
     C = A - B;
     if (C < 10 || C > 99) return generateEquation();
   }
-  // Retorna la ecuación en formato: NN?NN=NN
+  // Se retorna la ecuación en formato: NN?NN=NN (8 caracteres exactos)
   return A.toString() + op + B.toString() + "=" + C.toString();
 }
 
@@ -32,12 +32,12 @@ let gameOver = false;
 let targetEquation = "";
 let isDailyMode = false;  // false = modo normal, true = modo diario
 
-// Constante para el estado diario (las demás se han eliminado)
+// Constante para el estado diario en localStorage
 const DAILY_GAME_STATE_KEY = "dailyGameStateNerdle";
 
-// Teclado virtual: si solo se usan "+" y "-", se puede restringir allowedChars
+// Teclado virtual: si solo usamos "+" y "-" (más "=") se restringe allowedChars
 const numberKeys = ["1","2","3","4","5","6","7","8","9","0"];
-const operatorKeys = ["+", "-", "="]; // Se quitan "*" y "/" para coherencia con generateEquation()
+const operatorKeys = ["+", "-", "="];  // En este ejemplo solo se usan suma y resta
 const specialKeys = ["enter", "delete"];
 const allowedChars = "0123456789+-=";
 
@@ -257,24 +257,30 @@ function checkEquation() {
     console.log("¡Ganaste! Resultado final:", targetEquation.toUpperCase());
     gameOver = true;
     disableKeyboard();
+    // No incrementamos currentRow si se ganó
+    if (isDailyMode) saveDailyGameState();
     return;
   }
   currentRow++;
   currentCol = 0;
+  // Si se acabaron los intentos, ajustamos currentRow para que no exceda el índice de la grilla
   if (currentRow === MAX_ATTEMPTS) {
     showMessage(`Fin del juego. La ecuación era: ${targetEquation.toUpperCase()}`);
     console.log("Fin del juego. Resultado final:", targetEquation.toUpperCase());
     gameOver = true;
     disableKeyboard();
+    currentRow = MAX_ATTEMPTS - 1; // Ajuste para que la última fila se muestre correctamente
   }
   if (isDailyMode) saveDailyGameState();
 }
 
+/**************** Función para Deshabilitar el Teclado ****************/
 function disableKeyboard() {
   document.querySelectorAll(".key").forEach(key => key.disabled = true);
 }
 
 /**************** Funciones de Reinicio y Modo Diario ****************/
+// Reinicia el juego (modo normal)
 function restartGame() {
   if (isDailyMode) {
     showMessage("El juego diario no se puede reiniciar.");
@@ -289,6 +295,7 @@ function restartGame() {
   console.log("Nuevo target (modo normal):", targetEquation);
 }
 
+// Carga o crea el estado diario desde localStorage
 function loadDailyGameState() {
   const savedState = localStorage.getItem(DAILY_GAME_STATE_KEY);
   if (savedState) {
@@ -313,6 +320,7 @@ function loadDailyGameState() {
         });
       });
       console.log("Estado diario cargado:", state);
+      // Si el juego terminó, deshabilitamos el teclado
       if (gameOver) {
         disableKeyboard();
       }
@@ -367,6 +375,7 @@ function saveDailyGameState() {
   console.log("Estado diario guardado:", state);
 }
 
+/**************** Función Hash (opcional) ****************/
 function hashCode(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
