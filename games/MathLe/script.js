@@ -114,12 +114,14 @@ function handleKeyPress(key) {
     if (currentCol > 0) {
       currentCol--;
       updateBoardCell(currentRow, currentCol, "");
+      console.log(`Se borró carácter. (Fila ${currentRow}, Columna ${currentCol})`);
     }
     return;
   }
   if (allowedChars.includes(key) && currentCol < EQUATION_LENGTH) {
     updateBoardCell(currentRow, currentCol, key);
     currentCol++;
+    console.log(`Carácter agregado: ${key.toUpperCase()} (Fila ${currentRow}, Columna ${currentCol - 1})`);
   }
 }
 
@@ -173,6 +175,7 @@ function getFeedback(guess, target) {
       targetArr[index] = null;
     }
   }
+  console.log("Feedback para el intento:", feedback);
   return feedback;
 }
 
@@ -186,7 +189,7 @@ function paintRow(feedback) {
   }
 }
 
-// Actualiza el color de las teclas virtuales (si ya tienen un estado “mejor” no se degradan)
+// Actualiza el color de las teclas virtuales (evitando degradarlas)
 function updateKeyboardColors(guess, feedback) {
   for (let i = 0; i < EQUATION_LENGTH; i++) {
     const keyChar = guess[i];
@@ -218,24 +221,30 @@ function checkEquation() {
     const cell = document.getElementById(`cell-${currentRow}-${i}`);
     guess += cell.textContent.toLowerCase();
   }
-  console.log("Intento:", guess);
+  console.log(`Intento ${currentRow + 1}: ${guess}`);
   if (guess.length !== EQUATION_LENGTH) {
     showMessage("La ecuación debe tener 8 caracteres.");
+    console.log("Error: longitud incorrecta.");
     return;
   }
   if (!guess.includes("=")) {
     showMessage("La ecuación debe contener '='.");
+    console.log("Error: falta '='.");
     return;
   }
   if (!isValidEquation(guess)) {
     showMessage("Ecuación no válida.");
+    console.log("Error: la ecuación no es matemáticamente válida.");
     return;
   }
   const feedback = getFeedback(guess, targetEquation);
   paintRow(feedback);
   updateKeyboardColors(guess, feedback);
+  // Mostrar en consola el resultado del intento
+  console.log(`Resultado intento ${currentRow + 1}: ${guess.toUpperCase()} | Target: ${targetEquation.toUpperCase()}`);
   if (guess === targetEquation) {
     showMessage("¡Correcto! Has ganado.");
+    console.log("¡Ganaste! Resultado final:", targetEquation.toUpperCase());
     gameOver = true;
     disableKeyboard();
     return;
@@ -244,13 +253,14 @@ function checkEquation() {
   currentCol = 0;
   if (currentRow === MAX_ATTEMPTS) {
     showMessage(`Fin del juego. La ecuación era: ${targetEquation.toUpperCase()}`);
+    console.log("Fin del juego. Resultado final:", targetEquation.toUpperCase());
     gameOver = true;
     disableKeyboard();
   }
   if (isDailyMode) saveDailyGameState();
 }
 
-// Deshabilita el teclado virtual
+/**************** Función para deshabilitar el teclado ****************/
 function disableKeyboard() {
   document.querySelectorAll(".key").forEach(key => key.disabled = true);
 }
@@ -268,10 +278,10 @@ function restartGame() {
   generateBoard();
   generateKeyboard();
   targetEquation = validEquations[Math.floor(Math.random() * validEquations.length)];
-  console.log("Nuevo target:", targetEquation);
+  console.log("Nuevo target (modo normal):", targetEquation);
 }
 
-// Crea o carga el estado diario desde localStorage
+// Carga o crea el estado diario en localStorage
 function loadDailyGameState() {
   const savedState = localStorage.getItem(DAILY_GAME_STATE_KEY);
   if (savedState) {
@@ -295,6 +305,7 @@ function loadDailyGameState() {
           }
         });
       });
+      console.log("Estado diario cargado:", state);
       return true;
     }
   }
@@ -343,6 +354,7 @@ function saveDailyGameState() {
     lastPlayedDate: new Date().toDateString()
   };
   localStorage.setItem(DAILY_GAME_STATE_KEY, JSON.stringify(state));
+  console.log("Estado diario guardado:", state);
 }
 
 // Función hash para asignar la ecuación diaria según la fecha
