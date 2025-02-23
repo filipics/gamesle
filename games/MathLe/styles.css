@@ -12,8 +12,23 @@ body {
   flex-direction: column;
   align-items: center;
 }
-h1 {
+
+/* Botón para volver al menú principal */
+.back-btn {
+  display: inline-block;
   margin-bottom: 10px;
+  padding: 8px 16px;
+  background-color: #007bff;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+/* Título e información */
+h1 {
+  margin: 10px 0;
+  text-align: center;
 }
 #info {
   margin-bottom: 10px;
@@ -25,13 +40,14 @@ h1 {
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
 }
 
-/* Grilla (6 filas x 8 columnas) */
+/* Grilla: 6 filas x 8 columnas */
 #board {
   display: grid;
   grid-template-rows: repeat(6, 50px);
-  grid-gap: 5px;
+  gap: 5px;
   margin-bottom: 20px;
 }
 .board-row {
@@ -49,26 +65,24 @@ h1 {
   font-size: 1.5rem;
   background-color: #121213;
   text-transform: uppercase;
+  transition: background-color 0.3s;
 }
 
-/* Colores de feedback */
+/* Colores para feedback */
 .correct {
   background-color: #00cc88 !important;
   border-color: #00cc88 !important;
-  color: #ffffff;
 }
 .present {
   background-color: #b49f39 !important;
   border-color: #b49f39 !important;
-  color: #ffffff;
 }
 .absent {
   background-color: #3a3a3c !important;
   border-color: #3a3a3c !important;
-  color: #ffffff;
 }
 
-/* Mensaje */
+/* Mensaje de estado */
 #message {
   height: 24px;
   margin-bottom: 10px;
@@ -82,22 +96,25 @@ h1 {
   flex-direction: column;
   gap: 5px;
   margin-bottom: 20px;
+  width: 100%;
+  max-width: 500px;
 }
 .keyboard-row {
   display: flex;
   gap: 5px;
+  justify-content: center;
 }
 .key {
+  flex: 1;
+  padding: 10px;
   background-color: #818384;
-  color: #ffffff;
   border: none;
   border-radius: 4px;
-  padding: 10px 15px;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: bold;
   cursor: pointer;
   text-transform: uppercase;
-  font-weight: bold;
-  flex: 1;
-  text-align: center;
 }
 .key:hover {
   filter: brightness(110%);
@@ -108,8 +125,47 @@ h1 {
   display: flex;
   gap: 10px;
 }
-button {
+.control-btn {
   padding: 10px 20px;
   font-size: 1rem;
   cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  background-color: #818384;
+  color: #ffffff;
+}
+.control-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Adaptaciones para móviles */
+@media (max-width: 480px) {
+  body {
+    padding: 10px;
+  }
+  .cell {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+  #board {
+    gap: 3px;
+  }
+  .board-row {
+    gap: 3px;
+    grid-template-columns: repeat(8, 40px);
+  }
+  .key {
+    font-size: 0.9rem;
+    padding: 8px;
+  }
+  .back-btn {
+    font-size: 0.9rem;
+    padding: 6px 12px;
+  }
+  .control-btn {
+    font-size: 0.9rem;
+    padding: 8px 16px;
+  }
 }
