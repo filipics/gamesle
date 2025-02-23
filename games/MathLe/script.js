@@ -5,21 +5,21 @@ function generateEquation() {
   let A, B, C;
   if (op === '+') {
     // Para suma: A entre 10 y 89; B entre 10 y (99 - A)
-    A = Math.floor(Math.random() * (89 - 10 + 1)) + 10; // [10, 89]
+    A = Math.floor(Math.random() * (89 - 10 + 1)) + 10;
     const maxB = 99 - A;
-    if (maxB < 10) return generateEquation(); // Reintentar si no hay rango válido
-    B = Math.floor(Math.random() * (maxB - 10 + 1)) + 10; // [10, maxB]
+    if (maxB < 10) return generateEquation();
+    B = Math.floor(Math.random() * (maxB - 10 + 1)) + 10;
     C = A + B;
-    if (C < 10 || C > 99) return generateEquation(); // Asegurar que C tenga 2 dígitos
+    if (C < 10 || C > 99) return generateEquation();
   } else { // Para resta: A entre 20 y 99; B entre 10 y (A - 10)
-    A = Math.floor(Math.random() * (99 - 20 + 1)) + 20; // [20, 99]
+    A = Math.floor(Math.random() * (99 - 20 + 1)) + 20;
     const maxB = A - 10;
     if (maxB < 10) return generateEquation();
-    B = Math.floor(Math.random() * (maxB - 10 + 1)) + 10; // [10, maxB]
+    B = Math.floor(Math.random() * (maxB - 10 + 1)) + 10;
     C = A - B;
     if (C < 10 || C > 99) return generateEquation();
   }
-  // Se retorna la ecuación en formato: NN?NN=NN (8 caracteres exactos)
+  // Retorna la ecuación en formato: NN?NN=NN (8 caracteres exactos)
   return A.toString() + op + B.toString() + "=" + C.toString();
 }
 
@@ -30,14 +30,14 @@ let currentRow = 0;
 let currentCol = 0;
 let gameOver = false;
 let targetEquation = "";
-let isDailyMode = false;  // false = modo normal, true = modo diario
+let isDailyMode = false;  // false: modo normal, true: modo diario
 
-// Constante para el estado diario en localStorage
+// Clave para guardar estado en localStorage
 const DAILY_GAME_STATE_KEY = "dailyGameStateNerdle";
 
-// Teclado virtual: si solo usamos "+" y "-" (más "=") se restringe allowedChars
+// Definición del teclado virtual
 const numberKeys = ["1","2","3","4","5","6","7","8","9","0"];
-const operatorKeys = ["+", "-", "="];  // En este ejemplo solo se usan suma y resta
+const operatorKeys = ["+", "-", "="];
 const specialKeys = ["enter", "delete"];
 const allowedChars = "0123456789+-=";
 
@@ -67,12 +67,10 @@ function generateBoard() {
 }
 
 function generateKeyboard() {
-  // Limpiar filas
   keyboardNumbersElement.innerHTML = "";
   keyboardOperatorsElement.innerHTML = "";
   keyboardSpecialElement.innerHTML = "";
-
-  // Fila 1: Números
+  
   numberKeys.forEach(key => {
     const keyBtn = document.createElement("button");
     keyBtn.textContent = key;
@@ -80,8 +78,7 @@ function generateKeyboard() {
     keyBtn.addEventListener("click", () => handleKeyPress(key));
     keyboardNumbersElement.appendChild(keyBtn);
   });
-
-  // Fila 2: Operadores
+  
   operatorKeys.forEach(key => {
     const keyBtn = document.createElement("button");
     keyBtn.textContent = key;
@@ -89,8 +86,7 @@ function generateKeyboard() {
     keyBtn.addEventListener("click", () => handleKeyPress(key));
     keyboardOperatorsElement.appendChild(keyBtn);
   });
-
-  // Fila 3: Teclas especiales
+  
   specialKeys.forEach(key => {
     const keyBtn = document.createElement("button");
     keyBtn.textContent = (key === "enter") ? "Enter" : "Delete";
@@ -101,7 +97,6 @@ function generateKeyboard() {
 }
 
 /**************** Manejo del Teclado Físico y Virtual ****************/
-// Teclado físico
 document.addEventListener("keydown", (event) => {
   if (gameOver) return;
   let key = event.key.toLowerCase();
@@ -114,7 +109,6 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-// Función para procesar la pulsación de tecla (virtual o física)
 function handleKeyPress(key) {
   if (gameOver) return;
   if (key === "enter") {
@@ -140,7 +134,6 @@ function handleKeyPress(key) {
   }
 }
 
-// Actualiza el contenido de una celda en el grid
 function updateBoardCell(row, col, char) {
   const cell = document.getElementById(`cell-${row}-${col}`);
   if (cell) {
@@ -148,7 +141,6 @@ function updateBoardCell(row, col, char) {
   }
 }
 
-// Muestra mensajes en pantalla (por 2 segundos)
 function showMessage(msg) {
   messageElement.textContent = msg;
   setTimeout(() => { messageElement.textContent = ""; }, 2000);
@@ -257,30 +249,26 @@ function checkEquation() {
     console.log("¡Ganaste! Resultado final:", targetEquation.toUpperCase());
     gameOver = true;
     disableKeyboard();
-    // No incrementamos currentRow si se ganó
     if (isDailyMode) saveDailyGameState();
     return;
   }
   currentRow++;
   currentCol = 0;
-  // Si se acabaron los intentos, ajustamos currentRow para que no exceda el índice de la grilla
   if (currentRow === MAX_ATTEMPTS) {
     showMessage(`Fin del juego. La ecuación era: ${targetEquation.toUpperCase()}`);
     console.log("Fin del juego. Resultado final:", targetEquation.toUpperCase());
     gameOver = true;
     disableKeyboard();
-    currentRow = MAX_ATTEMPTS - 1; // Ajuste para que la última fila se muestre correctamente
+    currentRow = MAX_ATTEMPTS - 1; // Asegura que se muestre la última fila
   }
   if (isDailyMode) saveDailyGameState();
 }
 
-/**************** Función para Deshabilitar el Teclado ****************/
 function disableKeyboard() {
   document.querySelectorAll(".key").forEach(key => key.disabled = true);
 }
 
 /**************** Funciones de Reinicio y Modo Diario ****************/
-// Reinicia el juego (modo normal)
 function restartGame() {
   if (isDailyMode) {
     showMessage("El juego diario no se puede reiniciar.");
@@ -295,7 +283,6 @@ function restartGame() {
   console.log("Nuevo target (modo normal):", targetEquation);
 }
 
-// Carga o crea el estado diario desde localStorage
 function loadDailyGameState() {
   const savedState = localStorage.getItem(DAILY_GAME_STATE_KEY);
   if (savedState) {
@@ -320,7 +307,6 @@ function loadDailyGameState() {
         });
       });
       console.log("Estado diario cargado:", state);
-      // Si el juego terminó, deshabilitamos el teclado
       if (gameOver) {
         disableKeyboard();
       }
@@ -375,15 +361,6 @@ function saveDailyGameState() {
   console.log("Estado diario guardado:", state);
 }
 
-/**************** Función Hash (opcional) ****************/
-function hashCode(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return hash;
-}
-
 /**************** Eventos de Botones ****************/
 toggleModeButton.addEventListener("click", () => {
   isDailyMode = !isDailyMode;
@@ -391,7 +368,6 @@ toggleModeButton.addEventListener("click", () => {
     toggleModeButton.textContent = "Modo Diario";
     restartButton.disabled = true;
     if (!loadDailyGameState()) {
-      // Generamos la ecuación diaria y la guardamos
       targetEquation = generateEquation();
       console.log("Modo Diario. Target:", targetEquation);
       saveDailyGameState();
