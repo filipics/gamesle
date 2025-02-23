@@ -1,136 +1,399 @@
-document.addEventListener('DOMContentLoaded', function() {
-  // Lista de ecuaciones de ejemplo (puedes ampliarla o generar ecuaciones dinámicamente)
-  const equations = ["4+3=7", "2*3=6", "8-5=3", "9/3=3", "1+4=5", "7-2=5", "6+2=8"];
-  // Seleccionar una ecuación al azar
-  const targetEquation = equations[Math.floor(Math.random() * equations.length)];
-  const maxAttempts = 6;
-  let attempts = 0;
+/**************** Variables Globales y Constantes ****************/
+const MAX_ATTEMPTS = 6;
+const EQUATION_LENGTH = 8;
+let currentRow = 0;
+let currentCol = 0;
+let gameOver = false;
+let targetEquation = "";
+let isDailyMode = false;  // false = modo normal, true = modo diario
 
-  // Elementos del DOM
-  const board = document.getElementById("board");
-  const input = document.getElementById("guess-input");
-  const message = document.getElementById("message");
-  const submitBtn = document.getElementById("submit-btn");
-  const newGameBtn = document.getElementById("new-game-btn");
+// Para almacenar el estado del juego diario en localStorage
+const DAILY_GAME_STATE_KEY = "dailyGameStateNerdle";
+const DAILY_EQUATION_KEY = "dailyEquationNerdle";
+const LAST_PLAYED_DATE_KEY = "lastPlayedDateNerdle";
 
-  // Ajustar la longitud máxima del input según la ecuación objetivo
-  input.maxLength = targetEquation.length;
+// Lista de ecuaciones válidas (solo aquellas con 8 caracteres exactos)
+const validEquations = [
+  "10+10=20",
+  "12+12=24",
+  "10+11=21",
+  "11+12=23"
+];
 
-  // Enviar con botón y con la tecla Enter
-  submitBtn.addEventListener("click", handleSubmit);
-  input.addEventListener("keyup", function(e) {
-    if (e.key === "Enter") {
-      handleSubmit();
+// Teclado virtual: 3 filas
+const numberKeys = ["1","2","3","4","5","6","7","8","9","0"];
+const operatorKeys = ["+", "-", "*", "/", "="];
+const specialKeys = ["enter", "delete"];
+const allowedChars = "0123456789+-*/=";
+
+/**************** DOM Elements ****************/
+const boardElement = document.getElementById("board");
+const messageElement = document.getElementById("message");
+const keyboardNumbersElement = document.getElementById("keyboard-numbers");
+const keyboardOperatorsElement = document.getElementById("keyboard-operators");
+const keyboardSpecialElement = document.getElementById("keyboard-special");
+const toggleModeButton = document.getElementById("toggle-mode");
+const restartButton = document.getElementById("restart-game");
+
+/**************** Funciones de Inicialización ****************/
+function generateBoard() {
+  boardElement.innerHTML = "";
+  for (let row = 0; row < MAX_ATTEMPTS; row++) {
+    const rowDiv = document.createElement("div");
+    rowDiv.classList.add("board-row");
+    for (let col = 0; col < EQUATION_LENGTH; col++) {
+      const cellDiv = document.createElement("div");
+      cellDiv.classList.add("cell");
+      cellDiv.id = `cell-${row}-${col}`;
+      rowDiv.appendChild(cellDiv);
     }
+    boardElement.appendChild(rowDiv);
+  }
+}
+
+function generateKeyboard() {
+  // Limpiar filas
+  keyboardNumbersElement.innerHTML = "";
+  keyboardOperatorsElement.innerHTML = "";
+  keyboardSpecialElement.innerHTML = "";
+
+  // Fila 1: Números
+  numberKeys.forEach(key => {
+    const keyBtn = document.createElement("button");
+    keyBtn.textContent = key;
+    keyBtn.classList.add("key");
+    keyBtn.addEventListener("click", () => handleKeyPress(key));
+    keyboardNumbersElement.appendChild(keyBtn);
   });
 
-  // Reiniciar juego
-  newGameBtn.addEventListener("click", function() {
-    window.location.reload();
+  // Fila 2: Operadores
+  operatorKeys.forEach(key => {
+    const keyBtn = document.createElement("button");
+    keyBtn.textContent = key;
+    keyBtn.classList.add("key");
+    keyBtn.addEventListener("click", () => handleKeyPress(key));
+    keyboardOperatorsElement.appendChild(keyBtn);
   });
 
-  function handleSubmit() {
-    const guess = input.value.trim();
+  // Fila 3: Teclas especiales
+  specialKeys.forEach(key => {
+    const keyBtn = document.createElement("button");
+    keyBtn.textContent = (key === "enter") ? "Enter" : "Delete";
+    keyBtn.classList.add("key");
+    keyBtn.addEventListener("click", () => handleKeyPress(key));
+    keyboardSpecialElement.appendChild(keyBtn);
+  });
+}
 
-    // Verificar la longitud del guess
-    if (guess.length !== targetEquation.length) {
-      message.textContent = `La ecuación debe tener ${targetEquation.length} caracteres.`;
-      return;
-    }
-
-    // Verificar el formato: exactamente un '='
-    if (!isValidFormat(guess)) {
-      message.textContent = `La ecuación debe contener exactamente un '='.`;
-      return;
-    }
-
-    // Verificar que la ecuación sea matemáticamente válida
-    if (!evaluateEquation(guess)) {
-      message.textContent = `La ecuación no es matemáticamente válida.`;
-      return;
-    }
-
-    attempts++;
-    const feedback = getFeedback(guess, targetEquation);
-    addGuessToBoard(guess, feedback);
-
-    if (guess === targetEquation) {
-      message.textContent = "¡Felicidades! ¡Has resuelto la ecuación!";
-      endGame();
-    } else if (attempts >= maxAttempts) {
-      message.textContent = `¡Juego terminado! La ecuación correcta era ${targetEquation}.`;
-      endGame();
-    } else {
-      message.textContent = `Intento ${attempts} de ${maxAttempts}.`;
-    }
-
-    input.value = "";
-    input.focus();
-  }
-
-  // Verificar que la ecuación contenga exactamente un '='
-  function isValidFormat(eq) {
-    return (eq.split("=").length - 1) === 1;
-  }
-
-  // Evaluar si la parte izquierda es igual a la parte derecha
-  function evaluateEquation(eq) {
-    const parts = eq.split("=");
-    if (parts.length !== 2) return false;
-    try {
-      const left = eval(parts[0]);
-      const right = eval(parts[1]);
-      return left === right;
-    } catch (error) {
-      return false;
-    }
-  }
-
-  // Obtener retroalimentación para cada carácter (verde, amarillo, gris)
-  function getFeedback(guess, target) {
-    let feedback = new Array(guess.length).fill("gray");
-    let targetChars = target.split("");
-    let guessChars = guess.split("");
-
-    // Primera pasada: caracteres correctos en la posición correcta (verde)
-    for (let i = 0; i < guessChars.length; i++) {
-      if (guessChars[i] === targetChars[i]) {
-        feedback[i] = "green";
-        targetChars[i] = null; // Quitar el carácter ya usado
-      }
-    }
-
-    // Segunda pasada: caracteres presentes pero en posición distinta (amarillo)
-    for (let i = 0; i < guessChars.length; i++) {
-      if (feedback[i] === "green") continue;
-      let index = targetChars.indexOf(guessChars[i]);
-      if (index !== -1) {
-        feedback[i] = "yellow";
-        targetChars[index] = null;
-      }
-    }
-
-    return feedback;
-  }
-
-  // Añadir la fila del guess en el tablero con la retroalimentación de colores
-  function addGuessToBoard(guess, feedback) {
-    const row = document.createElement("div");
-    row.className = "row";
-    for (let i = 0; i < guess.length; i++) {
-      const cell = document.createElement("div");
-      cell.className = "cell " + feedback[i];
-      cell.textContent = guess[i];
-      row.appendChild(cell);
-    }
-    board.appendChild(row);
-  }
-
-  // Finalizar el juego deshabilitando la entrada y mostrando el botón de reinicio
-  function endGame() {
-    submitBtn.disabled = true;
-    input.disabled = true;
-    newGameBtn.style.display = "inline-block";
+/**************** Manejo del Teclado Físico y Virtual ****************/
+// Teclado físico
+document.addEventListener("keydown", (event) => {
+  if (gameOver) return;
+  let key = event.key.toLowerCase();
+  if (allowedChars.includes(key)) {
+    handleKeyPress(key);
+  } else if (key === "enter") {
+    handleKeyPress("enter");
+  } else if (key === "backspace" || key === "delete") {
+    handleKeyPress("delete");
   }
 });
 
+// Función para procesar la pulsación de tecla (virtual o física)
+function handleKeyPress(key) {
+  if (gameOver) return;
+  if (key === "enter") {
+    if (currentCol === EQUATION_LENGTH) {
+      checkEquation();
+    } else {
+      showMessage("Faltan caracteres.");
+    }
+    return;
+  }
+  if (key === "delete") {
+    if (currentCol > 0) {
+      currentCol--;
+      updateBoardCell(currentRow, currentCol, "");
+    }
+    return;
+  }
+  if (allowedChars.includes(key) && currentCol < EQUATION_LENGTH) {
+    updateBoardCell(currentRow, currentCol, key);
+    currentCol++;
+  }
+}
+
+// Actualiza el contenido de una celda en el grid
+function updateBoardCell(row, col, char) {
+  const cell = document.getElementById(`cell-${row}-${col}`);
+  if (cell) {
+    cell.textContent = char.toUpperCase();
+  }
+}
+
+// Muestra mensajes en pantalla (por 2 segundos)
+function showMessage(msg) {
+  messageElement.textContent = msg;
+  setTimeout(() => { messageElement.textContent = ""; }, 2000);
+}
+
+/**************** Validación y Feedback ****************/
+// Evalúa si la ecuación es matemáticamente válida (usa eval; en producción usar un parser seguro)
+function isValidEquation(eq) {
+  if (!eq.includes("=")) return false;
+  const parts = eq.split("=");
+  if (parts.length !== 2) return false;
+  try {
+    const left = eval(parts[0]);
+    const right = eval(parts[1]);
+    return left === right;
+  } catch (e) {
+    return false;
+  }
+}
+
+// Genera feedback al estilo Wordle (correcto, presente, ausente)
+function getFeedback(guess, target) {
+  let feedback = new Array(EQUATION_LENGTH).fill("absent");
+  let targetArr = target.split("");
+  let guessArr = guess.split("");
+  // Primera pasada: posición correcta
+  for (let i = 0; i < EQUATION_LENGTH; i++) {
+    if (guessArr[i] === targetArr[i]) {
+      feedback[i] = "correct";
+      targetArr[i] = null;
+    }
+  }
+  // Segunda pasada: carácter presente en otra posición
+  for (let i = 0; i < EQUATION_LENGTH; i++) {
+    if (feedback[i] === "correct") continue;
+    let index = targetArr.indexOf(guessArr[i]);
+    if (index !== -1) {
+      feedback[i] = "present";
+      targetArr[index] = null;
+    }
+  }
+  return feedback;
+}
+
+// Colorea la fila actual según el feedback obtenido
+function paintRow(feedback) {
+  for (let i = 0; i < EQUATION_LENGTH; i++) {
+    const cell = document.getElementById(`cell-${currentRow}-${i}`);
+    if (cell) {
+      cell.classList.add(feedback[i]);
+    }
+  }
+}
+
+// Actualiza el color de las teclas virtuales (si ya tienen un estado “mejor” no se degradan)
+function updateKeyboardColors(guess, feedback) {
+  for (let i = 0; i < EQUATION_LENGTH; i++) {
+    const keyChar = guess[i];
+    document.querySelectorAll(".key").forEach(btn => {
+      if (btn.textContent.toLowerCase() === keyChar) {
+        if (btn.classList.contains("correct")) return;
+        if (feedback[i] === "correct") {
+          btn.classList.remove("present", "absent");
+          btn.classList.add("correct");
+        } else if (feedback[i] === "present") {
+          if (!btn.classList.contains("correct")) {
+            btn.classList.remove("absent");
+            btn.classList.add("present");
+          }
+        } else {
+          if (!btn.classList.contains("correct") && !btn.classList.contains("present")) {
+            btn.classList.add("absent");
+          }
+        }
+      }
+    });
+  }
+}
+
+/**************** Proceso de Comprobación ****************/
+function checkEquation() {
+  let guess = "";
+  for (let i = 0; i < EQUATION_LENGTH; i++) {
+    const cell = document.getElementById(`cell-${currentRow}-${i}`);
+    guess += cell.textContent.toLowerCase();
+  }
+  console.log("Intento:", guess);
+  if (guess.length !== EQUATION_LENGTH) {
+    showMessage("La ecuación debe tener 8 caracteres.");
+    return;
+  }
+  if (!guess.includes("=")) {
+    showMessage("La ecuación debe contener '='.");
+    return;
+  }
+  if (!isValidEquation(guess)) {
+    showMessage("Ecuación no válida.");
+    return;
+  }
+  const feedback = getFeedback(guess, targetEquation);
+  paintRow(feedback);
+  updateKeyboardColors(guess, feedback);
+  if (guess === targetEquation) {
+    showMessage("¡Correcto! Has ganado.");
+    gameOver = true;
+    disableKeyboard();
+    return;
+  }
+  currentRow++;
+  currentCol = 0;
+  if (currentRow === MAX_ATTEMPTS) {
+    showMessage(`Fin del juego. La ecuación era: ${targetEquation.toUpperCase()}`);
+    gameOver = true;
+    disableKeyboard();
+  }
+  if (isDailyMode) saveDailyGameState();
+}
+
+// Deshabilita el teclado virtual
+function disableKeyboard() {
+  document.querySelectorAll(".key").forEach(key => key.disabled = true);
+}
+
+/**************** Funciones de Reinicio y Modo Diario ****************/
+// Reinicia el juego (modo normal)
+function restartGame() {
+  if (isDailyMode) {
+    showMessage("El juego diario no se puede reiniciar.");
+    return;
+  }
+  currentRow = 0;
+  currentCol = 0;
+  gameOver = false;
+  generateBoard();
+  generateKeyboard();
+  targetEquation = validEquations[Math.floor(Math.random() * validEquations.length)];
+  console.log("Nuevo target:", targetEquation);
+}
+
+// Crea o carga el estado diario desde localStorage
+function loadDailyGameState() {
+  const savedState = localStorage.getItem(DAILY_GAME_STATE_KEY);
+  if (savedState) {
+    const state = JSON.parse(savedState);
+    if (state.lastPlayedDate === new Date().toDateString()) {
+      currentRow = state.currentRow;
+      currentCol = state.currentCol;
+      gameOver = state.gameOver;
+      targetEquation = state.targetEquation;
+      state.board.forEach(item => {
+        const cell = document.getElementById(`cell-${item.row}-${item.col}`);
+        if (cell) {
+          cell.textContent = item.letter.toUpperCase();
+          if (item.color) cell.classList.add(item.color);
+        }
+      });
+      state.keyboard.forEach(item => {
+        document.querySelectorAll(".key").forEach(btn => {
+          if (btn.textContent.toLowerCase() === item.letter) {
+            btn.classList.add(item.color);
+          }
+        });
+      });
+      return true;
+    }
+  }
+  return false;
+}
+
+function saveDailyGameState() {
+  const boardState = [];
+  for (let row = 0; row < MAX_ATTEMPTS; row++) {
+    for (let col = 0; col < EQUATION_LENGTH; col++) {
+      const cell = document.getElementById(`cell-${row}-${col}`);
+      boardState.push({
+        row: row,
+        col: col,
+        letter: cell.textContent.toLowerCase(),
+        color: cell.classList.contains("correct")
+          ? "correct"
+          : cell.classList.contains("present")
+          ? "present"
+          : cell.classList.contains("absent")
+          ? "absent"
+          : ""
+      });
+    }
+  }
+  const keyboardState = [];
+  document.querySelectorAll(".key").forEach(btn => {
+    keyboardState.push({
+      letter: btn.textContent.toLowerCase(),
+      color: btn.classList.contains("correct")
+        ? "correct"
+        : btn.classList.contains("present")
+        ? "present"
+        : btn.classList.contains("absent")
+        ? "absent"
+        : ""
+    });
+  });
+  const state = {
+    currentRow,
+    currentCol,
+    gameOver,
+    targetEquation,
+    board: boardState,
+    keyboard: keyboardState,
+    lastPlayedDate: new Date().toDateString()
+  };
+  localStorage.setItem(DAILY_GAME_STATE_KEY, JSON.stringify(state));
+}
+
+// Función hash para asignar la ecuación diaria según la fecha
+function hashCode(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return hash;
+}
+
+/**************** Eventos de Botones ****************/
+toggleModeButton.addEventListener("click", () => {
+  isDailyMode = !isDailyMode;
+  if (isDailyMode) {
+    toggleModeButton.textContent = "Modo Diario";
+    restartButton.disabled = true;
+    if (!loadDailyGameState()) {
+      const today = new Date().toDateString();
+      const hash = Math.abs(hashCode(today));
+      const index = hash % validEquations.length;
+      targetEquation = validEquations[index];
+      console.log("Modo Diario. Target:", targetEquation);
+      saveDailyGameState();
+    }
+  } else {
+    toggleModeButton.textContent = "Modo Normal";
+    restartButton.disabled = false;
+    restartGame();
+  }
+});
+
+restartButton.addEventListener("click", () => {
+  restartGame();
+});
+
+/**************** Inicialización ****************/
+document.addEventListener("DOMContentLoaded", () => {
+  generateBoard();
+  generateKeyboard();
+  if (!isDailyMode) {
+    targetEquation = validEquations[Math.floor(Math.random() * validEquations.length)];
+    console.log("Modo Normal. Target:", targetEquation);
+  } else {
+    if (!loadDailyGameState()) {
+      const today = new Date().toDateString();
+      const hash = Math.abs(hashCode(today));
+      const index = hash % validEquations.length;
+      targetEquation = validEquations[index];
+      console.log("Modo Diario. Target:", targetEquation);
+      saveDailyGameState();
+    }
+  }
+});
