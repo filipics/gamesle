@@ -1,18 +1,23 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <!-- Meta viewport para móviles -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nerdle Clone</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <!-- Botón para volver al menú principal -->
+  <a href="../../index.html" class="back-btn">Volver al Menú Principal</a>
+
   <h1>Nerdle Clone</h1>
   <div id="info">
-    Adivina la ecuación de <strong>8 caracteres</strong> en 6 intentos. Debe incluir "=" y ser matemáticamente válida.
+    Adivina la ecuación de <strong>8 caracteres</strong> en 6 intentos. Debe incluir "=" y ser válida.
   </div>
 
   <div id="game-container">
-    <!-- Grid: 6 filas x 8 columnas -->
+    <!-- Grilla: 6 filas x 8 columnas -->
     <div id="board"></div>
     
     <!-- Mensaje de estado -->
@@ -27,8 +32,8 @@
     
     <!-- Controles: Modo y Reiniciar -->
     <div id="controls">
-      <button id="toggle-mode">Modo Normal</button>
-      <button id="restart-game">Reiniciar</button>
+      <button id="toggle-mode" class="control-btn">Modo Normal</button>
+      <button id="restart-game" class="control-btn">Reiniciar</button>
     </div>
   </div>
 
