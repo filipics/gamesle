@@ -109,6 +109,7 @@ h1 {
   padding: 10px;
   background-color: #818384;
   border: none;
+  min-width: 0;
   border-radius: 4px;
   color: #ffffff;
   font-size: 1rem;
@@ -158,6 +159,7 @@ h1 {
   }
   .key {
     font-size: 0.9rem;
+    min-width: 0;
     padding: 8px;
   }
   .back-btn {
