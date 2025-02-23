@@ -19,7 +19,7 @@ function generateEquation() {
     C = A - B;
     if (C < 10 || C > 99) return generateEquation();
   }
-  // Se retorna la ecuación en formato: NN?NN=NN
+  // Retorna la ecuación en formato: NN?NN=NN
   return A.toString() + op + B.toString() + "=" + C.toString();
 }
 
@@ -32,15 +32,13 @@ let gameOver = false;
 let targetEquation = "";
 let isDailyMode = false;  // false = modo normal, true = modo diario
 
-// Constantes para el estado diario (podrías eliminar las que no uses)
+// Constante para el estado diario (las demás se han eliminado)
 const DAILY_GAME_STATE_KEY = "dailyGameStateNerdle";
-// Nota: DAILY_EQUATION_KEY y LAST_PLAYED_DATE_KEY no se usan actualmente
 
-// Teclado virtual: si solo se usan "+" y "-", se podría restringir:
+// Teclado virtual: si solo se usan "+" y "-", se puede restringir allowedChars
 const numberKeys = ["1","2","3","4","5","6","7","8","9","0"];
-const operatorKeys = ["+", "-", /*"*", "/"*/, "="]; // Puedes quitar "*" y "/" si no se usan
+const operatorKeys = ["+", "-", "="]; // Se quitan "*" y "/" para coherencia con generateEquation()
 const specialKeys = ["enter", "delete"];
-// Si decides restringir, allowedChars puede ser:
 const allowedChars = "0123456789+-=";
 
 /**************** DOM Elements ****************/
@@ -315,6 +313,9 @@ function loadDailyGameState() {
         });
       });
       console.log("Estado diario cargado:", state);
+      if (gameOver) {
+        disableKeyboard();
+      }
       return true;
     }
   }
