@@ -201,13 +201,7 @@ let paisSecreto;
 let isDailyMode = false; // Cambia a true para iniciar en modo diario
 let gameOver = false;    // Variable global para saber si el juego terminó
 
-// (Asegúrate de tener definida la lista de países en una variable "paises", por ejemplo:
-// const paises = [
-//   { name: "Argentina", lat: -34.6037, lon: -58.3816, image: "ruta_a_imagen_argentina.jpg" },
-//   { name: "Brasil", lat: -15.7939, lon: -47.8828, image: "ruta_a_imagen_brasil.jpg" },
-//   ...
-// ];
-// )
+
 
 // ==================== Bloquear Entradas ==================== 
 function bloquearEntradas() {
@@ -413,6 +407,14 @@ function showMap() {
   mapContainer.appendChild(iframe);
 }
 
+// ==================== Ocultar Mapa ====================
+function hideMap() {
+  const mapContainer = document.getElementById("map-container");
+  if (mapContainer) {
+    mapContainer.innerHTML = "";
+  }
+}
+
 // ==================== Manejar Intento del Jugador ==================== 
 function realizarIntento() {
   if (gameOver) return;
@@ -495,6 +497,7 @@ function revealWord(text) {
 
 // ==================== Reiniciar ==================== 
 function reiniciarJuego() {
+  hideMap(); // Oculta el mapa antes de reiniciar
   if (isDailyMode) {
     const feedbackEl = document.getElementById("feedback");
     if (feedbackEl) feedbackEl.textContent = "El juego diario no se puede reiniciar.";
@@ -547,6 +550,7 @@ const modoJuegoBtn = document.getElementById("modo-juego");
 if (modoJuegoBtn) {
   modoJuegoBtn.addEventListener("click", function () {
     isDailyMode = !isDailyMode;
+    hideMap(); // Oculta el mapa al cambiar de modo
     this.textContent = isDailyMode ? "Modo Diario" : "Modo Normal";
     localStorage.setItem("isDailyModeMundole", isDailyMode.toString());
     iniciarJuego();
