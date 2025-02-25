@@ -17383,22 +17383,36 @@ function checkWord() {
 }
 
 function processWord(inputWord) {
-  const cells = document.querySelectorAll(".cell span");
+  // Limpia las clases de la fila actual para evitar residuos de jugadas anteriores
+  const cells = document.querySelectorAll(".cell");
+  const rowStart = currentRow * 5;
+  for (let i = rowStart; i < rowStart + 5; i++) {
+    cells[i].classList.remove("correct", "present", "absent");
+  }
+
+  // Obtiene los elementos <span> de cada celda
+  const spanCells = document.querySelectorAll(".cell span");
+
+  // Cuenta las apariciones de cada letra en la palabra objetivo
   const letterCount = {};
   for (let char of targetWord) {
     letterCount[char] = (letterCount[char] || 0) + 1;
   }
+
+  // Primera pasada: marcar letras en la posición correcta (verde)
   for (let i = 0; i < 5; i++) {
     const letter = inputWord[i];
     if (letter === targetWord[i]) {
-      cells[currentRow * 5 + i].parentElement.classList.add("correct");
+      spanCells[currentRow * 5 + i].parentElement.classList.add("correct");
       updateKeyColor(document.getElementById("key-" + letter), "correct");
       letterCount[letter]--;
     }
   }
+
+  // Segunda pasada: marcar letras presentes (amarilla) o ausentes (roja)
   for (let i = 0; i < 5; i++) {
     const letter = inputWord[i];
-    const cellDiv = cells[currentRow * 5 + i].parentElement;
+    const cellDiv = spanCells[currentRow * 5 + i].parentElement;
     if (!cellDiv.classList.contains("correct")) {
       if (targetWord.includes(letter) && letterCount[letter] > 0) {
         cellDiv.classList.add("present");
@@ -17410,6 +17424,8 @@ function processWord(inputWord) {
       }
     }
   }
+
+  // Verifica si se adivinó la palabra
   if (inputWord === targetWord) {
     showMessage("¡Ganaste!");
     revealWord("La palabra era: " + targetWord.toUpperCase());
@@ -17421,6 +17437,8 @@ function processWord(inputWord) {
     }
     return;
   }
+
+  // Verifica si se han agotado los intentos
   if (currentRow === maxAttempts - 1) {
     showMessage("¡Se acabaron los intentos!");
     revealWord("La palabra era: " + targetWord.toUpperCase());
@@ -17432,10 +17450,13 @@ function processWord(inputWord) {
     }
     return;
   }
+
+  // Prepara la siguiente fila
   currentRow++;
   currentCol = 0;
   saveDailyGameState();
 }
+
 
 // ==================== Actualizar Color de Teclas ==================== 
 function updateKeyColor(keyEl, newStatus) {
