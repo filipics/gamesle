@@ -23,19 +23,19 @@ function getDailyEquation() {
     // Modo suma:
     // A: 10 a 89 (2 dígitos)
     const A = (seed % 80) + 10; // valor entre 10 y 89
-    // B: debe estar entre 10 y (99 - A) para que A+B tenga 2 dígitos
-    const rangeB = (99 - A) - 10 + 1; // número de valores posibles
+    // B: entre 10 y (99 - A)
+    const rangeB = (99 - A) - 10 + 1;
     const B = (Math.floor(seed / 100) % rangeB) + 10;
-    const C = A + B; // Será entre 20 y 99
+    const C = A + B; // Debe ser entre 10 y 99
     eq = `${A}+${B}=${C}`;
   } else {
     // Modo resta:
     // A: 20 a 99 (2 dígitos)
     const A = (seed % 80) + 20; // valor entre 20 y 99
-    // B: debe ser entre 1 y (A - 10) para que A-B tenga 2 dígitos
-    const rangeB = A - 10; // valores de 1 a (A-10)
+    // B: entre 1 y (A - 10)
+    const rangeB = A - 10;
     const B = (Math.floor(seed / 100) % rangeB) + 1;
-    const C = A - B; // Será entre 10 y (A-1)
+    const C = A - B; // Debe ser entre 10 y 99
     eq = `${A}-${B}=${C}`;
   }
   // Por construcción, eq tiene 8 caracteres (2+1+2+1+2)
@@ -96,6 +96,8 @@ const keyboardOperatorsElement = document.getElementById("keyboard-operators");
 const keyboardSpecialElement = document.getElementById("keyboard-special");
 const toggleModeButton = document.getElementById("toggle-mode");
 const restartButton = document.getElementById("restart-game");
+const shareButton = document.getElementById("share-button");
+const backButton = document.getElementById("back-button");
 
 /**************** Funciones de Inicialización ****************/
 function generateBoard() {
@@ -211,14 +213,14 @@ function getFeedback(guess, target) {
   let feedback = new Array(EQUATION_LENGTH).fill("absent");
   let targetArr = target.split("");
   let guessArr = guess.split("");
-  // Primera pasada: marcar coincidencias exactas
+  // Primera pasada: posición correcta
   for (let i = 0; i < EQUATION_LENGTH; i++) {
     if (guessArr[i] === targetArr[i]) {
       feedback[i] = "correct";
       targetArr[i] = null;
     }
   }
-  // Segunda pasada: marcar caracteres presentes en posición distinta
+  // Segunda pasada: carácter presente en otra posición
   for (let i = 0; i < EQUATION_LENGTH; i++) {
     if (feedback[i] === "correct") continue;
     let index = targetArr.indexOf(guessArr[i]);
@@ -408,6 +410,39 @@ function saveDailyGameState() {
   console.log("Estado diario guardado:", state);
 }
 
+/**************** Funciones de Compartir y Volver ****************/
+function shareResult() {
+  if (!gameOver) {
+    showMessage("Termina el juego para compartir el resultado.");
+    return;
+  }
+  // Construimos un texto simple para compartir
+  const shareText = `Nerdle Clone - Resultado: ${targetEquation.toUpperCase()}\n¡Juega en: https://gamesle.netlify.app/!`;
+  // Si es móvil, intentamos abrir WhatsApp
+  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    const whatsappUrl = "whatsapp://send?text=" + encodeURIComponent(shareText);
+    window.open(whatsappUrl, "_blank");
+  } else if (navigator.share) {
+    navigator.share({
+      title: "Nerdle Clone",
+      text: shareText,
+      url: "https://gamesle.netlify.app/"
+    }).catch(err => console.error(err));
+  } else {
+    // Fallback: copiar al portapapeles
+    navigator.clipboard.writeText(shareText).then(() => {
+      showMessage("Resultado copiado al portapapeles.");
+    }).catch(() => {
+      showMessage("No se pudo copiar el resultado.");
+    });
+  }
+}
+
+function backToMain() {
+  // Redirige a la página principal; ajusta la URL según tu estructura
+  window.location.href = "../../index.html";
+}
+
 /**************** Eventos de Botones ****************/
 toggleModeButton.addEventListener("click", () => {
   isDailyMode = !isDailyMode;
@@ -429,6 +464,14 @@ toggleModeButton.addEventListener("click", () => {
 
 restartButton.addEventListener("click", () => {
   restartGame();
+});
+
+shareButton.addEventListener("click", () => {
+  shareResult();
+});
+
+backButton.addEventListener("click", () => {
+  backToMain();
 });
 
 /**************** Inicialización ****************/
