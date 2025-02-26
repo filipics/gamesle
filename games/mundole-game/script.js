@@ -2,6 +2,11 @@
 const paises = [
    { name: "Afganistán", lat: 33.9391, lon: 67.7100, image: "images/afghanistan.png" },
 { name: "Albania", lat: 41.1533, lon: 20.1683, image: "images/albania.png" },
+{ name: "Samoa Americana", lat: -14.2710, lon: -170.1322, image: "images/american_samoa.png" },
+{ name: "Anguilla", lat: 18.2206, lon: -63.0686, image: "images/anguilla.png" },
+{ name: "Antártida", lat: -82.8628, lon: 135.0000, image: "images/antarctica.png" },
+{ name: "Aruba", lat: 12.5211, lon: -70.0187, image: "images/aruba.png" },
+{ name: "Bermuda", lat: 32.3078, lon: -64.7505, image: "images/bermuda.png" },
 { name: "Argelia", lat: 28.0339, lon: 1.6596, image: "images/algeria.png" },
 { name: "Andorra", lat: 42.5078, lon: 1.5218, image: "images/andorra.png" },
 { name: "Angola", lat: -11.2027, lon: 17.8739, image: "images/angola.png" },
