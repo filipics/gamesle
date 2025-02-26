@@ -1,4 +1,48 @@
-/**************** Función para Generar una Ecuación Aleatoria ****************/
+/**************** Función auxiliar para rellenar con ceros ****************/
+function pad(num, length) {
+  return num.toString().padStart(length, '0');
+}
+
+/**************** Función hash ****************/
+function hashCode(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return hash;
+}
+
+/**************** Función para generar la ecuación en modo diario usando un hash ****************/
+function getDailyEquation() {
+  const now = new Date();
+  const dateStr = now.toDateString(); // Ej: "Wed Feb 26 2025"
+  const seed = Math.abs(hashCode(dateStr));
+  let eq;
+  // Decidimos el operador según una parte del seed
+  if ( (Math.floor(seed / 10000)) % 2 === 0 ) {
+    // Modo suma:
+    // A: 10 a 89 (2 dígitos)
+    const A = (seed % 80) + 10; // valor entre 10 y 89
+    // B: debe estar entre 10 y (99 - A) para que A+B tenga 2 dígitos
+    const rangeB = (99 - A) - 10 + 1; // número de valores posibles
+    const B = (Math.floor(seed / 100) % rangeB) + 10;
+    const C = A + B; // Será entre 20 y 99
+    eq = `${A}+${B}=${C}`;
+  } else {
+    // Modo resta:
+    // A: 20 a 99 (2 dígitos)
+    const A = (seed % 80) + 20; // valor entre 20 y 99
+    // B: debe ser entre 1 y (A - 10) para que A-B tenga 2 dígitos
+    const rangeB = A - 10; // valores de 1 a (A-10)
+    const B = (Math.floor(seed / 100) % rangeB) + 1;
+    const C = A - B; // Será entre 10 y (A-1)
+    eq = `${A}-${B}=${C}`;
+  }
+  // Por construcción, eq tiene 8 caracteres (2+1+2+1+2)
+  return eq;
+}
+
+/**************** Función para generar una ecuación aleatoria (modo normal) ****************/
 function generateEquation() {
   const ops = ['+', '-'];
   const op = ops[Math.floor(Math.random() * ops.length)];
@@ -19,8 +63,11 @@ function generateEquation() {
     C = A - B;
     if (C < 10 || C > 99) return generateEquation();
   }
-  // Retorna la ecuación en formato: NN?NN=NN (8 caracteres exactos)
   return A.toString() + op + B.toString() + "=" + C.toString();
+}
+
+function getNormalEquation() {
+  return generateEquation();
 }
 
 /**************** Variables Globales y Constantes ****************/
@@ -32,7 +79,7 @@ let gameOver = false;
 let targetEquation = "";
 let isDailyMode = false;  // false: modo normal, true: modo diario
 
-// Clave para guardar estado en localStorage
+// Clave para guardar el estado en modo diario en localStorage
 const DAILY_GAME_STATE_KEY = "dailyGameStateNerdle";
 
 // Definición del teclado virtual
@@ -164,14 +211,14 @@ function getFeedback(guess, target) {
   let feedback = new Array(EQUATION_LENGTH).fill("absent");
   let targetArr = target.split("");
   let guessArr = guess.split("");
-  // Primera pasada: posición correcta
+  // Primera pasada: marcar coincidencias exactas
   for (let i = 0; i < EQUATION_LENGTH; i++) {
     if (guessArr[i] === targetArr[i]) {
       feedback[i] = "correct";
       targetArr[i] = null;
     }
   }
-  // Segunda pasada: carácter presente en otra posición
+  // Segunda pasada: marcar caracteres presentes en posición distinta
   for (let i = 0; i < EQUATION_LENGTH; i++) {
     if (feedback[i] === "correct") continue;
     let index = targetArr.indexOf(guessArr[i]);
@@ -279,7 +326,7 @@ function restartGame() {
   gameOver = false;
   generateBoard();
   generateKeyboard();
-  targetEquation = generateEquation();
+  targetEquation = getNormalEquation();
   console.log("Nuevo target (modo normal):", targetEquation);
 }
 
@@ -368,7 +415,8 @@ toggleModeButton.addEventListener("click", () => {
     toggleModeButton.textContent = "Modo Diario";
     restartButton.disabled = true;
     if (!loadDailyGameState()) {
-      targetEquation = generateEquation();
+      // En modo diario, usamos la ecuación determinada por el hash de la fecha
+      targetEquation = getDailyEquation();
       console.log("Modo Diario. Target:", targetEquation);
       saveDailyGameState();
     }
@@ -387,12 +435,13 @@ restartButton.addEventListener("click", () => {
 document.addEventListener("DOMContentLoaded", () => {
   generateBoard();
   generateKeyboard();
+  // Determinamos el modo; por defecto, se arranca en modo normal
   if (!isDailyMode) {
-    targetEquation = generateEquation();
+    targetEquation = getNormalEquation();
     console.log("Modo Normal. Target:", targetEquation);
   } else {
     if (!loadDailyGameState()) {
-      targetEquation = generateEquation();
+      targetEquation = getDailyEquation();
       console.log("Modo Diario. Target:", targetEquation);
       saveDailyGameState();
     }
