@@ -17139,6 +17139,7 @@ function removeAccents(word) {
 }
 
 // (La lista de palabras se asume que ya está definida en otro lugar)
+// Se espera que existan dos listas: "wordSelectionList" y "wordValidationList"
 
 // ==================== Estado del Juego Diario (LocalStorage) ==================== 
 function loadDailyGameState() {
@@ -17215,6 +17216,8 @@ function saveDailyGameState() {
       lastPlayedDate: new Date().toDateString()
     };
     localStorage.setItem(DAILY_GAME_STATE_KEY_WORDLE, JSON.stringify(gameState));
+    // Actualizamos también la fecha para la palabra diaria
+    localStorage.setItem(LAST_PLAYED_DATE_KEY_WORDLE, new Date().toDateString());
   }
 }
 
@@ -17379,6 +17382,8 @@ function checkWord() {
     showMessage("❌ No está en la lista.");
     return;
   }
+  // Se agrega la palabra ingresada al historial de jugadas
+  guessedWords.push(word);
   processWord(word);
 }
 
@@ -17457,7 +17462,6 @@ function processWord(inputWord) {
   saveDailyGameState();
 }
 
-
 // ==================== Actualizar Color de Teclas ==================== 
 function updateKeyColor(keyEl, newStatus) {
   if (!keyEl) return;
@@ -17491,9 +17495,11 @@ function resetGame() {
     showMessage("El juego diario no se puede reiniciar.");
     return;
   }
+  // En resetGame se selecciona una nueva palabra y se regeneran el grid y el teclado
   selectRandomWord();
   generateGrid();
   generateKeyboard();
+  // Reinicia el estado del teclado
   document.querySelectorAll(".key").forEach(k => {
     k.classList.remove("correct", "present", "absent");
     k.style.pointerEvents = "auto";
@@ -17520,7 +17526,7 @@ document.getElementById("modeToggle").addEventListener("click", function () {
     return;
   } else {
     document.getElementById("reset-game").disabled = false;
-    selectRandomWord();
+    // En modo normal, resetGame() ya se encarga de seleccionar la nueva palabra
     resetGame();
   }
 });
@@ -17596,21 +17602,13 @@ document.addEventListener("DOMContentLoaded", function () {
   document.addEventListener("keydown", (event) => {
     handleKeyPress(event.key);
   });
-  // Leer bandera de modo diario guardada para Wordle
+  // Unificamos la verificación del modo diario a partir de la bandera almacenada
   const storedMode = localStorage.getItem(IS_DAILY_MODE_KEY_WORDLE);
-  if (storedMode === "true") {
-    isDailyMode = true;
-    document.getElementById("modeToggle").textContent = "Modo Diario";
-  }
-  // Verificar si existe un juego diario guardado para hoy
   const savedDailyGame = localStorage.getItem(DAILY_GAME_STATE_KEY_WORDLE);
   const todayDate = new Date().toDateString();
-  if (savedDailyGame) {
-    const parsedState = JSON.parse(savedDailyGame);
-    if (parsedState.lastPlayedDate === todayDate) {
-      isDailyMode = true;
-      document.getElementById("modeToggle").textContent = "Modo Diario";
-    }
+  if (storedMode === "true" || (savedDailyGame && JSON.parse(savedDailyGame).lastPlayedDate === todayDate)) {
+    isDailyMode = true;
+    document.getElementById("modeToggle").textContent = "Modo Diario";
   }
   // Primero generamos el grid y el teclado para que existan en el DOM
   generateGrid();
@@ -17622,7 +17620,6 @@ document.addEventListener("DOMContentLoaded", function () {
       loadDailyGameState();
     }
   } else {
-    selectRandomWord();
     resetGame();
   }
   updateHistoryDisplay();
