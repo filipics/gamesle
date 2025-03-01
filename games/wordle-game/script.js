@@ -17116,7 +17116,6 @@
         "zuros",
         "zuzos"
     ].map(word => removeAccents(word));
-
 // ==================== Variables Globales ==================== 
 let currentRow = 0;
 let currentCol = 0;
@@ -17617,6 +17616,11 @@ document.addEventListener("DOMContentLoaded", function () {
   generateGrid();
   generateKeyboard();
   if (isDailyMode) {
+    // <<-- ¡IMPORTANTE! Restaurar la palabra diaria guardada
+    const savedDailyWord = localStorage.getItem(DAILY_WORD_KEY_WORDLE);
+    if (savedDailyWord) {
+      targetWord = savedDailyWord;
+    }
     if (!loadDailyGameState()) {
       selectRandomWord();
       saveDailyGameState();
