@@ -17138,47 +17138,49 @@ function removeAccents(word) {
   return word.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-// (La lista de palabras se asume que ya está definida en otro lugar)
-// Se espera que existan dos listas: "wordSelectionList" y "wordValidationList"
+// (Se asume que existen dos listas: "wordSelectionList" y "wordValidationList")
 
 // ==================== Estado del Juego Diario (LocalStorage) ==================== 
 function loadDailyGameState() {
   const savedGame = localStorage.getItem(DAILY_GAME_STATE_KEY_WORDLE);
+  const todayDate = new Date().toDateString();
   if (savedGame) {
     const state = JSON.parse(savedGame);
-    // Comprobamos que la fecha guardada sea la de hoy
-    if (state.lastPlayedDate === new Date().toDateString()) {
-      guessedWords = state.guessedWords || [];
-      currentRow = state.currentRow || 0;
-      const cells = document.querySelectorAll(".cell");
-      state.boardState.forEach((cellData, index) => {
-        const cell = cells[index];
-        if (cell) {
-          const span = cell.querySelector("span");
-          if (span) {
-            span.innerText = cellData.letter;
-          }
-          cell.classList.remove("correct", "present", "absent");
-          if (cellData.class) {
-            cell.classList.add(cellData.class);
-          }
-        }
-      });
-      state.keyboardState.forEach(keyData => {
-        const keyElement = document.getElementById("key-" + keyData.letter);
-        if (keyElement) {
-          keyElement.classList.remove("correct", "present", "absent");
-          if (keyData.class) {
-            keyElement.classList.add(keyData.class);
-          }
-        }
-      });
-      if (state.gameOver === true) {
-        gameOver = true;
-        document.querySelectorAll(".key").forEach(key => key.style.pointerEvents = "none");
-      }
-      return true;
+    // Si el estado guardado no es de hoy, se elimina para empezar limpio
+    if (state.lastPlayedDate !== todayDate) {
+      localStorage.removeItem(DAILY_GAME_STATE_KEY_WORDLE);
+      return false;
     }
+    guessedWords = state.guessedWords || [];
+    currentRow = state.currentRow || 0;
+    const cells = document.querySelectorAll(".cell");
+    state.boardState.forEach((cellData, index) => {
+      const cell = cells[index];
+      if (cell) {
+        const span = cell.querySelector("span");
+        if (span) {
+          span.innerText = cellData.letter;
+        }
+        cell.classList.remove("correct", "present", "absent");
+        if (cellData.class) {
+          cell.classList.add(cellData.class);
+        }
+      }
+    });
+    state.keyboardState.forEach(keyData => {
+      const keyElement = document.getElementById("key-" + keyData.letter);
+      if (keyElement) {
+        keyElement.classList.remove("correct", "present", "absent");
+        if (keyData.class) {
+          keyElement.classList.add(keyData.class);
+        }
+      }
+    });
+    if (state.gameOver === true) {
+      gameOver = true;
+      document.querySelectorAll(".key").forEach(key => key.style.pointerEvents = "none");
+    }
+    return true;
   }
   return false;
 }
@@ -17521,6 +17523,7 @@ document.getElementById("modeToggle").addEventListener("click", function () {
     if (!loadDailyGameState()) {
       selectRandomWord();
       saveDailyGameState();
+      loadDailyGameState();
     }
     document.getElementById("reset-game").disabled = true;
     return;
