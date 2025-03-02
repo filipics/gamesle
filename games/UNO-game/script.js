@@ -85,7 +85,7 @@ function initializeGame() {
   renderCenter();
   updateTurnInfo();
   
-  // Limpiar log de jugadas (ahora se inserta lo último arriba)
+  // Limpiar log de jugadas (se insertarán las últimas primeras)
   document.getElementById("log").innerHTML = "";
   
   // Si el primer turno es CPU, iniciar con retardo
@@ -101,7 +101,7 @@ function updateTurnInfo() {
   turnInfo.innerText = `Turno: ${currentPlayer.name} | Color actual: ${currentColor.toUpperCase()}`;
 }
 
-/* Registra movimientos en el log (inserta al principio para tener lo último arriba) */
+/* Registra movimientos en el log (último mensaje arriba) */
 function logMove(message) {
   const logDiv = document.getElementById("log");
   const p = document.createElement("p");
@@ -125,6 +125,24 @@ function getCardDescription(card) {
     return `+4 Comodín`;
   }
   return "";
+}
+
+/* Función que muestra el overlay para elegir color y devuelve una promesa */
+function chooseColor() {
+  return new Promise((resolve) => {
+    const picker = document.getElementById("color-picker");
+    picker.classList.remove("hidden");
+    const options = document.querySelectorAll(".color-option");
+    const handler = (event) => {
+      const color = event.target.getAttribute("data-color");
+      options.forEach(opt => opt.removeEventListener("click", handler));
+      picker.classList.add("hidden");
+      resolve(color);
+    };
+    options.forEach(opt => {
+      opt.addEventListener("click", handler);
+    });
+  });
 }
 
 /* Renderiza la interfaz */
@@ -217,7 +235,7 @@ function isValidMove(card) {
 }
 
 /* Aplica el efecto de la carta jugada */
-function processCardEffect(card, player) {
+function processCardEffect(card, player, skipColorSelection = false) {
   if (card.tipo !== "wild" && card.tipo !== "wildDraw4") {
     currentColor = card.color;
   }
@@ -233,8 +251,11 @@ function processCardEffect(card, player) {
   }
   if (card.tipo === "wild") {
     if (player.type === "human") {
-      let chosenColor = prompt("Elige un color: rojo, verde, azul o amarillo").toLowerCase();
-      currentColor = (["rojo","verde","azul","amarillo"].includes(chosenColor)) ? chosenColor : "rojo";
+      if (!skipColorSelection) {
+        // Fallback (no debería ocurrir, ya que usamos chooseColor)
+        let chosenColor = prompt("Elige un color: rojo, verde, azul o amarillo").toLowerCase();
+        currentColor = (["rojo", "verde", "azul", "amarillo"].includes(chosenColor)) ? chosenColor : "rojo";
+      }
     } else {
       const colores = ["rojo", "verde", "azul", "amarillo"];
       currentColor = colores[Math.floor(Math.random() * colores.length)];
@@ -244,8 +265,10 @@ function processCardEffect(card, player) {
     pendingDraw += 4;
     skipNext = true;
     if (player.type === "human") {
-      let chosenColor = prompt("Elige un color: rojo, verde, azul o amarillo").toLowerCase();
-      currentColor = (["rojo","verde","azul","amarillo"].includes(chosenColor)) ? chosenColor : "rojo";
+      if (!skipColorSelection) {
+        let chosenColor = prompt("Elige un color: rojo, verde, azul o amarillo").toLowerCase();
+        currentColor = (["rojo", "verde", "azul", "amarillo"].includes(chosenColor)) ? chosenColor : "rojo";
+      }
     } else {
       const colores = ["rojo", "verde", "azul", "amarillo"];
       currentColor = colores[Math.floor(Math.random() * colores.length)];
@@ -275,26 +298,49 @@ function humanPlayCard(cardIndex) {
   currentPlayer.hand.splice(cardIndex, 1);
   discardPile.push(card);
   logMove(`Tú jugaste: ${getCardDescription(card)}`);
-  processCardEffect(card, currentPlayer);
-  renderGame();
-  renderCenter();
   
-  if (currentPlayer.hand.length === 0) {
-    alert("¡Felicidades, ganaste!");
-    initializeGame();
-    return;
-  }
-  
-  if (pendingDraw > 0) {
+  if ((card.tipo === "wild" || card.tipo === "wildDraw4") && currentPlayer.type === "human") {
+    // Mostrar el selector de color y esperar la elección
+    chooseColor().then(chosenColor => {
+      currentColor = chosenColor;
+      processCardEffect(card, currentPlayer, true);
+      renderGame();
+      renderCenter();
+      if (currentPlayer.hand.length === 0) {
+        alert("¡Felicidades, ganaste!");
+        initializeGame();
+        return;
+      }
+      if (pendingDraw > 0) {
+        nextPlayer();
+        applyPendingDraw(players[currentPlayerIndex]);
+        return;
+      }
+      nextPlayer();
+      updateTurnInfo();
+      if (players[currentPlayerIndex].type === "cpu") {
+        setTimeout(cpuTurn, 2000);
+      }
+    });
+  } else {
+    processCardEffect(card, currentPlayer);
+    renderGame();
+    renderCenter();
+    if (currentPlayer.hand.length === 0) {
+      alert("¡Felicidades, ganaste!");
+      initializeGame();
+      return;
+    }
+    if (pendingDraw > 0) {
+      nextPlayer();
+      applyPendingDraw(players[currentPlayerIndex]);
+      return;
+    }
     nextPlayer();
-    applyPendingDraw(players[currentPlayerIndex]);
-    return;
-  }
-  
-  nextPlayer();
-  updateTurnInfo();
-  if (players[currentPlayerIndex].type === "cpu") {
-    setTimeout(cpuTurn, 2000);
+    updateTurnInfo();
+    if (players[currentPlayerIndex].type === "cpu") {
+      setTimeout(cpuTurn, 2000);
+    }
   }
 }
 
