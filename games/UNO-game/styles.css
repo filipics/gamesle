@@ -1,34 +1,83 @@
 body {
-    text-align: center;
-    font-family: Arial, sans-serif;
+  font-family: Arial, sans-serif;
+  background-color: #f7f7f7;
+  text-align: center;
+  margin: 0;
+  padding: 0;
 }
 
-#flag-container {
-    display: flex;
-    flex-direction: column;
-    width: 200px;
-    height: 120px;
-    margin: 20px auto;
-    border: 2px solid black;
+h1 {
+  margin-top: 20px;
 }
 
-.flag-section {
-    flex: 1;
-    border-bottom: 1px solid black;
-    cursor: pointer;
+#game-info {
+  margin: 10px;
 }
 
-#color-palette {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-top: 20px;
+#game-area {
+  display: flex;
+  justify-content: space-around;
+  margin: 20px;
 }
 
-.color-option {
-    width: 40px;
-    height: 40px;
-    margin: 5px;
-    cursor: pointer;
-    border: 1px solid black;
+#computer-area, #player-area {
+  border: 2px solid #333;
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 8px;
+  width: 30%;
+  min-height: 200px;
+}
+
+#center-area {
+  width: 30%;
+}
+
+#deck-area, #discard-area {
+  margin: 10px;
+}
+
+#deck, #discard-pile {
+  width: 100px;
+  height: 150px;
+  border: 1px solid #000;
+  border-radius: 8px;
+  margin: auto;
+  position: relative;
+}
+
+.card {
+  width: 70px;
+  height: 100px;
+  border: 1px solid #000;
+  border-radius: 8px;
+  margin: 5px;
+  display: inline-block;
+  line-height: 100px;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #fff;
+}
+
+/* Colores de las cartas según su color */
+.card.rojo { background-color: #e74c3c; }
+.card.verde { background-color: #27ae60; }
+.card.azul { background-color: #2980b9; }
+.card.amarillo { background-color: #f1c40f; color: #000; }
+.card.comodin { background-color: #7f8c8d; }
+
+/* Las cartas de la mano de la PC se muestran con reverso */
+#computer-hand .card {
+  background-color: #333;
+  color: #333;
+  border: 1px solid #333;
+  cursor: default;
+}
+
+/* Imagen de fondo para el mazo (opcional) */
+#deck {
+  background-image: url('https://via.placeholder.com/100x150?text=Mazo');
+  background-size: cover;
+  cursor: pointer;
 }
