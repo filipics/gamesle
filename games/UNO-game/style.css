@@ -98,24 +98,35 @@ h1 {
   background-position: center;
 }
 
+/* Usar imagen PNG para el reverso del mazo */
 #deck {
   background-image: url("imagenes/mazo.png");
   cursor: pointer;
 }
 
-/* Jugador Humano */
+/* Para que la carta en la pila de descarte llene el cuadrado y tenga números grandes */
+#discard-pile .card {
+  width: 100px;
+  height: 150px;
+  line-height: 150px;
+  font-size: 32px;
+}
+
+/* Jugador Humano: se muestran todas las cartas en filas (sin scroll horizontal) */
 #player-bottom {
   grid-area: human;
   background-color: rgba(255, 255, 255, 0.9);
   border: 2px solid #fff;
   border-radius: 8px;
   padding: 10px;
-  overflow-x: auto;
-  white-space: nowrap;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
   color: #333;
 }
 
-/* Cartas */
+/* Cartas (para jugador y CPU) */
 .card {
   width: 60px;
   height: 90px;
@@ -124,7 +135,7 @@ h1 {
   margin: 4px;
   display: inline-block;
   line-height: 90px;
-  font-size: 18px;
+  font-size: 24px;
   font-weight: bold;
   cursor: pointer;
   color: #fff;
@@ -173,7 +184,7 @@ h1 {
     width: 50px;
     height: 70px;
     line-height: 70px;
-    font-size: 16px;
+    font-size: 20px;
     margin: 2px;
   }
   .cpu-player {
