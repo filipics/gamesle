@@ -1,24 +1,40 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Adivina la Bandera</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <title>Juego de Uno</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Adivina la Bandera</h1>
-    <p id="country-name">País: Argentina</p>
-    <div id="flag-container">
-        <!-- Bandera con áreas para pintar -->
-        <div class="flag-section" data-color="celeste"></div>
-        <div class="flag-section" data-color="blanco"></div>
-        <div class="flag-section" data-color="celeste"></div>
-        <div class="flag-section" data-color="amarillo"></div> <!-- Para el sol -->
+  <h1>Juego de Uno</h1>
+  <div id="game-info">
+    <p id="turn-info"></p>
+    <p id="message"></p>
+  </div>
+  <div id="game-area">
+    <!-- Área de la PC -->
+    <div id="computer-area">
+      <h2>PC</h2>
+      <div id="computer-hand"></div>
     </div>
-    <p>Errores: <span id="errors">0</span>/5</p>
-    <div id="color-palette"></div>
-    <button id="reset-btn">Reiniciar</button>
-    <script src="script.js"></script>
+    <!-- Área central: Mazo y Pila de Descarte -->
+    <div id="center-area">
+      <div id="deck-area">
+        <h3>Mazo</h3>
+        <!-- Al hacer clic en el mazo, el jugador roba una carta -->
+        <div id="deck" onclick="playerDrawCard()"></div>
+      </div>
+      <div id="discard-area">
+        <h3>Pila de Descarte</h3>
+        <div id="discard-pile"></div>
+      </div>
+    </div>
+    <!-- Área del Jugador -->
+    <div id="player-area">
+      <h2>Jugador</h2>
+      <div id="player-hand"></div>
+    </div>
+  </div>
+  <script src="script.js"></script>
 </body>
 </html>
