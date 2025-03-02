@@ -49,8 +49,8 @@ h1 {
   border: 2px solid #fff;
   border-radius: 8px;
   padding: 5px;
-  width: 160px;
-  height: 240px;
+  width: 80px;
+  height: 120px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -63,8 +63,8 @@ h1 {
 }
 
 .cpu-avatar {
-  width: 100px;
-  height: 100px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   margin-bottom: 2px;
   object-fit: cover;
@@ -98,7 +98,7 @@ h1 {
   background-position: center;
 }
 
-/* Zoom en la imagen del mazo: ahora se ve más de cerca */
+/* Zoom en la imagen del mazo */
 #deck {
   background-image: url("imagenes/mazo.png");
   cursor: pointer;
@@ -120,7 +120,7 @@ h1 {
   color: #fff;
 }
 
-/* Jugador Humano: se muestran todas las cartas en filas (sin scroll horizontal) */
+/* Jugador Humano: se muestran todas las cartas en filas */
 #player-bottom {
   grid-area: human;
   background-color: rgba(255, 255, 255, 0.9);
@@ -172,6 +172,40 @@ h1 {
 #log {
   font-size: 14px;
   line-height: 1.4;
+}
+
+/* Overlay para seleccionar color */
+#color-picker {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+#color-picker.hidden {
+  display: none;
+}
+
+#color-picker-container {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  display: flex;
+  gap: 10px;
+}
+
+.color-option {
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 4px;
 }
 
 /* Media queries para dispositivos móviles */
