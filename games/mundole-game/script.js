@@ -143,7 +143,6 @@ const paises = [
 { name: "Rumania", lat: 45.9432, lon: 24.9668, image: "images/romania.png" },
 { name: "Rusia", lat: 61.524, lon: 105.3188, image: "images/russia.png" },
 { name: "Ruanda", lat: -1.9403, lon: 29.8739, image: "images/rwanda.png" },
-{ name: "San Cristóbal y Nieves", lat: 17.3578, lon: -62.7824, image: "images/saint_kitts_and_nevis.png" },
 { name: "Santa Lucía", lat: 13.9094, lon: -60.9789, image: "images/saint_lucia.png" },
 { name: "San Vicente y las Granadinas", lat: 12.9843, lon: -61.2872, image: "images/saint_vincent_and_the_grenadines.png" },
 { name: "Samoa", lat: -13.759, lon: -172.1046, image: "images/samoa.png" },
