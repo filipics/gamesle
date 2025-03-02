@@ -1,40 +1,72 @@
+/* Estilos generales */
 body {
   font-family: Arial, sans-serif;
-  background-color: #f7f7f7;
-  text-align: center;
+  background-color: #f2f2f2;
   margin: 0;
   padding: 0;
+  text-align: center;
 }
 
 h1 {
-  margin-top: 20px;
+  margin: 20px 0;
 }
 
+/* Información de juego */
 #game-info {
   margin: 10px;
 }
 
-#game-area {
-  display: flex;
-  justify-content: space-around;
-  margin: 20px;
+#turn-info, #message {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
 }
 
-#computer-area, #player-area {
-  border: 2px solid #333;
+/* Contenedor principal en grid para simular la mesa */
+#game-container {
+  display: grid;
+  grid-template-areas:
+    "top top top"
+    "left center right"
+    "bottom bottom bottom";
+  grid-template-rows: auto 1fr auto;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin: 20px;
   padding: 10px;
+}
+
+/* Áreas de jugadores y centro */
+.player-area {
   background-color: #fff;
+  border: 2px solid #444;
   border-radius: 8px;
-  width: 30%;
-  min-height: 200px;
+  padding: 10px;
+}
+
+#player-top {
+  grid-area: top;
+}
+
+#player-left {
+  grid-area: left;
 }
 
 #center-area {
-  width: 30%;
+  grid-area: center;
 }
 
+#player-right {
+  grid-area: right;
+}
+
+#player-bottom {
+  grid-area: bottom;
+}
+
+/* Área del mazo y descarte */
 #deck-area, #discard-area {
-  margin: 10px;
+  margin: 10px 0;
 }
 
 #deck, #discard-pile {
@@ -44,40 +76,101 @@ h1 {
   border-radius: 8px;
   margin: auto;
   position: relative;
+  background-size: cover;
 }
 
+/* Imagen para el reverso del mazo */
+#deck {
+  background-image: url("imagenes/mazo.jpg");
+  cursor: pointer;
+}
+
+/* Estilos para las cartas */
 .card {
   width: 70px;
   height: 100px;
   border: 1px solid #000;
   border-radius: 8px;
-  margin: 5px;
+  margin: 4px;
   display: inline-block;
   line-height: 100px;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: bold;
   cursor: pointer;
   color: #fff;
 }
 
-/* Colores de las cartas según su color */
+/* Colores según carta */
 .card.rojo { background-color: #e74c3c; }
 .card.verde { background-color: #27ae60; }
 .card.azul { background-color: #2980b9; }
 .card.amarillo { background-color: #f1c40f; color: #000; }
 .card.comodin { background-color: #7f8c8d; }
 
-/* Las cartas de la mano de la PC se muestran con reverso */
-#computer-hand .card {
-  background-color: #333;
-  color: #333;
-  border: 1px solid #333;
+/* Mano del jugador humano: cartas en fila */
+.player-area.human {
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+/* Para las manos de las CPU, se muestra el reverso de las cartas */
+.player-area.cpu .card {
+  background-color: #444;
+  border: 1px solid #444;
+  color: #444;
   cursor: default;
 }
 
-/* Imagen de fondo para el mazo (opcional) */
-#deck {
-  background-image: url('https://via.placeholder.com/100x150?text=Mazo');
-  background-size: cover;
-  cursor: pointer;
+/* Encabezados de cada jugador */
+.player-area h2 {
+  margin: 5px 0;
+}
+
+/* Avatar para CPU */
+.cpu-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  margin-bottom: 5px;
+  object-fit: cover;
+  border: 2px solid #333;
+}
+
+/* Cantidad de cartas en CPU */
+.cpu-count {
+  font-size: 16px;
+  margin-top: 5px;
+}
+
+/* Media queries para dispositivos móviles */
+@media (max-width: 768px) {
+  #game-container {
+    grid-template-areas:
+      "top"
+      "center"
+      "bottom"
+      "left"
+      "right";
+    grid-template-rows: auto auto auto auto auto;
+    grid-template-columns: 1fr;
+  }
+  
+  .player-area {
+    width: 90%;
+    margin: 0 auto;
+  }
+  
+  /* Reducir tamaño de cartas y áreas centrales */
+  #deck, #discard-pile {
+    width: 80px;
+    height: 120px;
+  }
+  
+  .card {
+    width: 50px;
+    height: 70px;
+    line-height: 70px;
+    font-size: 16px;
+    margin: 2px;
+  }
 }
