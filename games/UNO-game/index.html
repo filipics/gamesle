@@ -10,13 +10,10 @@
   <h1>Juego de Uno - 4 Jugadores</h1>
   <div id="game-info">
     <p id="turn-info"></p>
-    <p id="message"></p>
   </div>
   <div id="game-container">
-    <!-- Área superior: CPU 1 -->
-    <div id="player-top" class="player-area cpu" data-player="1"></div>
-    <!-- Área izquierda: CPU 2 -->
-    <div id="player-left" class="player-area cpu" data-player="2"></div>
+    <!-- Contenedor de CPU: se mostrarán en la parte superior en cuadraditos pequeños -->
+    <div id="cpu-container"></div>
     <!-- Área central: Mazo y Pila de Descarte -->
     <div id="center-area">
       <div id="deck-area">
@@ -29,10 +26,13 @@
         <div id="discard-pile"></div>
       </div>
     </div>
-    <!-- Área derecha: CPU 3 -->
-    <div id="player-right" class="player-area cpu" data-player="3"></div>
-    <!-- Área inferior: Jugador Humano -->
+    <!-- Área inferior: Jugador humano -->
     <div id="player-bottom" class="player-area human" data-player="0"></div>
+  </div>
+  <!-- Historial de jugadas -->
+  <div id="log-container">
+    <h3>Historial de Jugadas</h3>
+    <div id="log"></div>
   </div>
   <script src="script.js"></script>
 </body>
