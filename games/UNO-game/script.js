@@ -51,12 +51,13 @@ function initializeGame() {
   direction = 1;
   currentColor = "";
 
-  // Jugadores: id 0 = humano, 1 a 3 = CPU
+  // Jugadores: id 0 = humano, 1 a 3 = CPU  
+  // Se renombraron las CPU según lo solicitado.
   players = [
     { id: 0, name: "Tú", type: "human", hand: [] },
-    { id: 1, name: "CPU 1", type: "cpu", hand: [], avatar: "imagenes/cpu1.png" },
-    { id: 2, name: "CPU 2", type: "cpu", hand: [], avatar: "imagenes/cpu2.png" },
-    { id: 3, name: "CPU 3", type: "cpu", hand: [], avatar: "imagenes/cpu3.png" }
+    { id: 1, name: "Messi", type: "cpu", hand: [], avatar: "imagenes/cpu1.png" },
+    { id: 2, name: "Cristiano", type: "cpu", hand: [], avatar: "imagenes/cpu2.png" },
+    { id: 3, name: "Neymar", type: "cpu", hand: [], avatar: "imagenes/cpu3.png" }
   ];
   
   // Repartir 7 cartas a cada jugador
@@ -84,7 +85,7 @@ function initializeGame() {
   renderCenter();
   updateTurnInfo();
   
-  // Limpiar log de jugadas
+  // Limpiar log de jugadas (ahora se inserta lo último arriba)
   document.getElementById("log").innerHTML = "";
   
   // Si el primer turno es CPU, iniciar con retardo
@@ -100,13 +101,12 @@ function updateTurnInfo() {
   turnInfo.innerText = `Turno: ${currentPlayer.name} | Color actual: ${currentColor.toUpperCase()}`;
 }
 
-/* Registra movimientos en el log */
+/* Registra movimientos en el log (inserta al principio para tener lo último arriba) */
 function logMove(message) {
   const logDiv = document.getElementById("log");
   const p = document.createElement("p");
   p.textContent = message;
-  logDiv.appendChild(p);
-  logDiv.scrollTop = logDiv.scrollHeight;
+  logDiv.insertBefore(p, logDiv.firstChild);
 }
 
 /* Devuelve una descripción de la carta */
@@ -298,7 +298,7 @@ function humanPlayCard(cardIndex) {
   }
 }
 
-/* Robo de carta para humano */
+/* Robo de carta para el humano */
 function humanDrawCard() {
   if (players[currentPlayerIndex].type !== "human") return;
   let drawnCard = drawCardFromDeck();
@@ -334,7 +334,6 @@ function cpuTurn() {
     if (isValidMove(card)) {
       currentPlayer.hand.splice(i, 1);
       discardPile.push(card);
-      // Prepara mensaje según el tipo de carta
       let message = `${currentPlayer.name} jugó: ${getCardDescription(card)}`;
       let nextIndex = (currentPlayerIndex + direction + players.length) % players.length;
       if (card.tipo === "skip") {
@@ -414,7 +413,7 @@ function cpuTurn() {
   }
 }
 
-/* Aplica efecto de robar cartas pendientes */
+/* Aplica el efecto de robar cartas pendientes */
 function applyPendingDraw(player) {
   for (let i = 0; i < pendingDraw; i++) {
     player.hand.push(drawCardFromDeck());
@@ -443,4 +442,3 @@ function drawCardFromDeck() {
 }
 
 window.onload = initializeGame;
-
