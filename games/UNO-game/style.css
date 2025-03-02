@@ -108,9 +108,16 @@ h1 {
 /* Ajuste de la carta en la pila de descarte para que se ajuste al cuadrado */
 #discard-pile .card {
   width: 60px;
-  height: 105px;
-  line-height: 135px;
-  font-size: 28px;
+  height: 90px;
+  border: 2px solid #333;
+  border-radius: 8px;
+  margin: 4px;
+  display: inline-block;
+  line-height: 90px;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #fff;
 }
 
 /* Jugador Humano: se muestran todas las cartas en filas (sin scroll horizontal) */
