@@ -11,6 +11,8 @@ document.querySelectorAll('.game-btn').forEach((button) => {
       gamePath = "/games/mundole-game/index.html";
     } else if (button.id === "game4") {
       gamePath = "/games/MathLe/index.html";
+    } else if (button.id === "game5") {
+      gamePath = "/games/UNO-game/index.html";  
     } else {
       // Si se agregan más botones en el futuro con IDs diferentes.
       gamePath = `/games/game${button.id.replace('game', '')}/index.html`;
