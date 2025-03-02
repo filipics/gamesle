@@ -98,18 +98,19 @@ h1 {
   background-position: center;
 }
 
-/* Usar imagen PNG para el reverso del mazo */
+/* Zoom en la imagen del mazo: ahora se ve más de cerca */
 #deck {
   background-image: url("imagenes/mazo.png");
   cursor: pointer;
+  background-size: 120%;
 }
 
-/* Para que la carta en la pila de descarte llene el cuadrado y tenga números grandes */
+/* Ajuste de la carta en la pila de descarte para que se ajuste al cuadrado */
 #discard-pile .card {
-  width: 100px;
-  height: 150px;
-  line-height: 150px;
-  font-size: 32px;
+  width: 90px;
+  height: 135px;
+  line-height: 135px;
+  font-size: 28px;
 }
 
 /* Jugador Humano: se muestran todas las cartas en filas (sin scroll horizontal) */
