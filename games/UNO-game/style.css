@@ -81,7 +81,7 @@ h1 {
 
 /* Imagen para el reverso del mazo */
 #deck {
-  background-image: url("imagenes/mazo.jpg");
+  background-image: url("imagenes/mazo.png");
   cursor: pointer;
 }
 
