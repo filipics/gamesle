@@ -1,10 +1,10 @@
 /* Variables globales del juego */
 let players = [];
-let currentPlayerIndex = 0; // Índice en el arreglo players
+let currentPlayerIndex = 0; // Índice del jugador actual
 let direction = 1; // 1 = sentido horario, -1 = antihorario
 let deck = [];
 let discardPile = [];
-let pendingDraw = 0; // Acumula cartas a robar por efectos (+2, +4)
+let pendingDraw = 0; // Cartas acumuladas por efectos (+2, +4)
 let skipNext = false;
 let currentColor = "";
 
@@ -12,7 +12,6 @@ let currentColor = "";
 function buildDeck() {
   let newDeck = [];
   const colores = ["rojo", "verde", "azul", "amarillo"];
-  
   // Cartas numéricas
   colores.forEach(color => {
     newDeck.push({ color: color, tipo: "numero", numero: 0 });
@@ -20,12 +19,13 @@ function buildDeck() {
       newDeck.push({ color: color, tipo: "numero", numero: i });
       newDeck.push({ color: color, tipo: "numero", numero: i });
     }
+    // Cartas especiales: skip, reverse y draw2 (dos de cada)
     ["skip", "reverse", "draw2"].forEach(tipo => {
       newDeck.push({ color: color, tipo: tipo });
       newDeck.push({ color: color, tipo: tipo });
     });
   });
-  // Cartas comodín
+  // Cartas comodín: wild y wildDraw4 (cuatro de cada)
   for (let i = 0; i < 4; i++) {
     newDeck.push({ color: "comodin", tipo: "wild" });
     newDeck.push({ color: "comodin", tipo: "wildDraw4" });
@@ -33,7 +33,7 @@ function buildDeck() {
   return newDeck;
 }
 
-/* Algoritmo para barajar */
+/* Algoritmo de barajado (Fisher-Yates) */
 function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
     let j = Math.floor(Math.random() * (i + 1));
@@ -51,8 +51,7 @@ function initializeGame() {
   direction = 1;
   currentColor = "";
 
-  // Jugadores: id 0 = humano, 1 a 3 = CPU  
-  // Se renombraron las CPU según lo solicitado.
+  // Jugadores: id 0 = humano; 1,2,3 = CPU (se renombran)
   players = [
     { id: 0, name: "Tú", type: "human", hand: [] },
     { id: 1, name: "Messi", type: "cpu", hand: [], avatar: "imagenes/cpu1.png" },
@@ -80,28 +79,29 @@ function initializeGame() {
     }
   } while (true);
   
+  // Escoger aleatoriamente quién comienza
   currentPlayerIndex = Math.floor(Math.random() * players.length);
   renderGame();
   renderCenter();
   updateTurnInfo();
   
-  // Limpiar log de jugadas (se insertarán las últimas primeras)
+  // Limpiar el historial (último mensaje arriba)
   document.getElementById("log").innerHTML = "";
   
-  // Si el primer turno es CPU, iniciar con retardo
+  // Si el primer turno es de una CPU, iniciar con retardo
   if (players[currentPlayerIndex].type === "cpu") {
     setTimeout(cpuTurn, 2000);
   }
 }
 
-/* Actualiza la información de turno */
+/* Actualiza la información del turno */
 function updateTurnInfo() {
   const turnInfo = document.getElementById("turn-info");
   let currentPlayer = players[currentPlayerIndex];
   turnInfo.innerText = `Turno: ${currentPlayer.name} | Color actual: ${currentColor.toUpperCase()}`;
 }
 
-/* Registra movimientos en el log (último mensaje arriba) */
+/* Registra un movimiento en el historial (se inserta al principio) */
 function logMove(message) {
   const logDiv = document.getElementById("log");
   const p = document.createElement("p");
@@ -109,7 +109,7 @@ function logMove(message) {
   logDiv.insertBefore(p, logDiv.firstChild);
 }
 
-/* Devuelve una descripción de la carta */
+/* Devuelve una descripción legible de la carta */
 function getCardDescription(card) {
   if (card.tipo === "numero") {
     return `${card.numero} de ${card.color}`;
@@ -145,7 +145,7 @@ function chooseColor() {
   });
 }
 
-/* Renderiza la interfaz */
+/* Renderiza la interfaz completa */
 function renderGame() {
   renderCpuPlayers();
   renderHumanPlayer();
@@ -157,6 +157,8 @@ function renderCpuPlayers() {
   players.filter(p => p.type === "cpu").forEach(cpu => {
     const cpuDiv = document.createElement("div");
     cpuDiv.className = "cpu-player";
+    // Asignar un id para animaciones (ej.: cpu-player-1)
+    cpuDiv.id = "cpu-player-" + cpu.id;
     const header = document.createElement("h2");
     header.innerText = cpu.name;
     cpuDiv.appendChild(header);
@@ -224,7 +226,7 @@ function renderCenter() {
   discardDiv.appendChild(cardDiv);
 }
 
-/* Verifica si una carta es jugable */
+/* Verifica si la carta es jugable */
 function isValidMove(card) {
   let topCard = discardPile[discardPile.length - 1];
   if (card.tipo === "wild" || card.tipo === "wildDraw4") return true;
@@ -234,7 +236,7 @@ function isValidMove(card) {
   return false;
 }
 
-/* Aplica el efecto de la carta jugada */
+/* Aplica los efectos de la carta jugada. Si se trata de comodín en humano, la selección se hace con overlay. */
 function processCardEffect(card, player, skipColorSelection = false) {
   if (card.tipo !== "wild" && card.tipo !== "wildDraw4") {
     currentColor = card.color;
@@ -252,9 +254,7 @@ function processCardEffect(card, player, skipColorSelection = false) {
   if (card.tipo === "wild") {
     if (player.type === "human") {
       if (!skipColorSelection) {
-        // Fallback (no debería ocurrir, ya que usamos chooseColor)
-        let chosenColor = prompt("Elige un color: rojo, verde, azul o amarillo").toLowerCase();
-        currentColor = (["rojo", "verde", "azul", "amarillo"].includes(chosenColor)) ? chosenColor : "rojo";
+        // En principio, la selección se hace con chooseColor()
       }
     } else {
       const colores = ["rojo", "verde", "azul", "amarillo"];
@@ -266,8 +266,7 @@ function processCardEffect(card, player, skipColorSelection = false) {
     skipNext = true;
     if (player.type === "human") {
       if (!skipColorSelection) {
-        let chosenColor = prompt("Elige un color: rojo, verde, azul o amarillo").toLowerCase();
-        currentColor = (["rojo", "verde", "azul", "amarillo"].includes(chosenColor)) ? chosenColor : "rojo";
+        // La selección se hará con chooseColor()
       }
     } else {
       const colores = ["rojo", "verde", "azul", "amarillo"];
@@ -287,6 +286,45 @@ function nextPlayer() {
   currentPlayerIndex = nextIndex;
 }
 
+/* Animación de robo: crea un elemento que se mueve desde el mazo hasta el área del jugador */
+function animateDrawCard(player, callback) {
+  let deckElem = document.getElementById("deck");
+  let target;
+  if (player.type === "human") {
+    target = document.getElementById("player-bottom");
+  } else {
+    target = document.getElementById("cpu-player-" + player.id);
+  }
+  let cardElem = document.createElement("div");
+  cardElem.className = "card animated-card";
+  // Opcional: usar el mismo background que el reverso del mazo
+  cardElem.style.backgroundImage = deckElem.style.backgroundImage;
+  cardElem.style.backgroundSize = deckElem.style.backgroundSize;
+  cardElem.style.position = "fixed";
+  let deckRect = deckElem.getBoundingClientRect();
+  cardElem.style.left = deckRect.left + "px";
+  cardElem.style.top = deckRect.top + "px";
+  cardElem.style.width = deckRect.width + "px";
+  cardElem.style.height = deckRect.height + "px";
+  cardElem.style.transition = "all 0.8s ease-out";
+  document.body.appendChild(cardElem);
+  
+  // Obtener posición destino (centrar en el target)
+  let targetRect = target.getBoundingClientRect();
+  let targetX = targetRect.left + (targetRect.width - deckRect.width) / 2;
+  let targetY = targetRect.top + (targetRect.height - deckRect.height) / 2;
+  
+  // Forzar reflow
+  cardElem.offsetWidth;
+  cardElem.style.left = targetX + "px";
+  cardElem.style.top = targetY + "px";
+  
+  cardElem.addEventListener("transitionend", function() {
+    cardElem.remove();
+    callback();
+  });
+}
+
 /* Turno del jugador humano */
 function humanPlayCard(cardIndex) {
   let currentPlayer = players[currentPlayerIndex];
@@ -297,13 +335,12 @@ function humanPlayCard(cardIndex) {
   }
   currentPlayer.hand.splice(cardIndex, 1);
   discardPile.push(card);
-  logMove(`Tú jugaste: ${getCardDescription(card)}`);
-  
+  // Si es comodín, se usa el overlay para elegir color
   if ((card.tipo === "wild" || card.tipo === "wildDraw4") && currentPlayer.type === "human") {
-    // Mostrar el selector de color y esperar la elección
     chooseColor().then(chosenColor => {
       currentColor = chosenColor;
       processCardEffect(card, currentPlayer, true);
+      logMove(`Tú jugaste: ${getCardDescription(card)} y cambiaste el color a ${currentColor.toUpperCase()}`);
       renderGame();
       renderCenter();
       if (currentPlayer.hand.length === 0) {
@@ -324,6 +361,7 @@ function humanPlayCard(cardIndex) {
     });
   } else {
     processCardEffect(card, currentPlayer);
+    logMove(`Tú jugaste: ${getCardDescription(card)}`);
     renderGame();
     renderCenter();
     if (currentPlayer.hand.length === 0) {
@@ -344,42 +382,43 @@ function humanPlayCard(cardIndex) {
   }
 }
 
-/* Robo de carta para el humano */
+/* Robo de carta para el jugador humano con animación */
 function humanDrawCard() {
   if (players[currentPlayerIndex].type !== "human") return;
   let drawnCard = drawCardFromDeck();
-  players[currentPlayerIndex].hand.push(drawnCard);
-  renderGame();
-  logMove("Tú robaste una carta.");
-  
-  if (isValidMove(drawnCard)) {
-    if (confirm("¿Quieres jugar la carta que robaste?")) {
-      humanPlayCard(players[currentPlayerIndex].hand.length - 1);
-      return;
+  animateDrawCard(players[currentPlayerIndex], drawnCard, function() {
+    players[currentPlayerIndex].hand.push(drawnCard);
+    renderGame();
+    logMove("Tú robaste una carta.");
+    if (isValidMove(drawnCard)) {
+      if (confirm("¿Quieres jugar la carta que robaste?")) {
+        humanPlayCard(players[currentPlayerIndex].hand.length - 1);
+        return;
+      }
     }
-  }
-  
-  nextPlayer();
-  updateTurnInfo();
-  if (players[currentPlayerIndex].type === "cpu") {
-    setTimeout(cpuTurn, 2000);
-  }
+    nextPlayer();
+    updateTurnInfo();
+    if (players[currentPlayerIndex].type === "cpu") {
+      setTimeout(cpuTurn, 2000);
+    }
+  });
 }
 
-/* Turno de CPU */
+/* Turno de la CPU */
 function cpuTurn() {
   let currentPlayer = players[currentPlayerIndex];
   if (pendingDraw > 0) {
     applyPendingDraw(currentPlayer);
     return;
   }
-  
   let played = false;
+  // Buscar la primera carta jugable
   for (let i = 0; i < currentPlayer.hand.length; i++) {
     let card = currentPlayer.hand[i];
     if (isValidMove(card)) {
       currentPlayer.hand.splice(i, 1);
       discardPile.push(card);
+      processCardEffect(card, currentPlayer);
       let message = `${currentPlayer.name} jugó: ${getCardDescription(card)}`;
       let nextIndex = (currentPlayerIndex + direction + players.length) % players.length;
       if (card.tipo === "skip") {
@@ -389,12 +428,11 @@ function cpuTurn() {
       } else if (card.tipo === "wild") {
         message += ` y cambió el color a ${currentColor.toUpperCase()}`;
       } else if (card.tipo === "wildDraw4") {
-        message += ` y obligó a ${players[nextIndex].name} a robar 4 cartas`;
+        message += ` y obligó a ${players[nextIndex].name} a robar 4 cartas y cambió el color a ${currentColor.toUpperCase()}`;
       } else if (card.tipo === "reverse") {
         message += ` y cambió la dirección`;
       }
       logMove(message);
-      processCardEffect(card, currentPlayer);
       played = true;
       break;
     }
@@ -402,79 +440,95 @@ function cpuTurn() {
   
   if (!played) {
     let drawnCard = drawCardFromDeck();
-    currentPlayer.hand.push(drawnCard);
-    logMove(`${currentPlayer.name} robó una carta.`);
-    if (isValidMove(drawnCard)) {
-      setTimeout(() => {
-        let index = currentPlayer.hand.indexOf(drawnCard);
-        currentPlayer.hand.splice(index, 1);
-        discardPile.push(drawnCard);
-        let message = `${currentPlayer.name} robó y jugó: ${getCardDescription(drawnCard)}`;
-        let nextIndex = (currentPlayerIndex + direction + players.length) % players.length;
-        if (drawnCard.tipo === "skip") {
-          message += ` y saltó a ${players[nextIndex].name}`;
-        } else if (drawnCard.tipo === "draw2") {
-          message += ` y obligó a ${players[nextIndex].name} a robar 2 cartas`;
-        } else if (drawnCard.tipo === "wild") {
-          message += ` y cambió el color a ${currentColor.toUpperCase()}`;
-        } else if (drawnCard.tipo === "wildDraw4") {
-          message += ` y obligó a ${players[nextIndex].name} a robar 4 cartas`;
-        } else if (drawnCard.tipo === "reverse") {
-          message += ` y cambió la dirección`;
-        }
-        logMove(message);
-        processCardEffect(drawnCard, currentPlayer);
+    animateDrawCard(currentPlayer, drawnCard, function() {
+      currentPlayer.hand.push(drawnCard);
+      logMove(`${currentPlayer.name} robó una carta.`);
+      renderGame();
+      if (isValidMove(drawnCard)) {
+        setTimeout(() => {
+          let index = currentPlayer.hand.indexOf(drawnCard);
+          currentPlayer.hand.splice(index, 1);
+          discardPile.push(drawnCard);
+          processCardEffect(drawnCard, currentPlayer);
+          let message = `${currentPlayer.name} robó y jugó: ${getCardDescription(drawnCard)}`;
+          let nextIndex = (currentPlayerIndex + direction + players.length) % players.length;
+          if (drawnCard.tipo === "skip") {
+            message += ` y saltó a ${players[nextIndex].name}`;
+          } else if (drawnCard.tipo === "draw2") {
+            message += ` y obligó a ${players[nextIndex].name} a robar 2 cartas`;
+          } else if (drawnCard.tipo === "wild") {
+            message += ` y cambió el color a ${currentColor.toUpperCase()}`;
+          } else if (drawnCard.tipo === "wildDraw4") {
+            message += ` y obligó a ${players[nextIndex].name} a robar 4 cartas y cambió el color a ${currentColor.toUpperCase()}`;
+          } else if (drawnCard.tipo === "reverse") {
+            message += ` y cambió la dirección`;
+          }
+          logMove(message);
+          renderGame();
+          renderCenter();
+          if (currentPlayer.hand.length === 0) {
+            alert(`${currentPlayer.name} gana la partida.`);
+            initializeGame();
+            return;
+          }
+          nextPlayer();
+          updateTurnInfo();
+          if (players[currentPlayerIndex].type === "cpu") {
+            setTimeout(cpuTurn, 2000);
+          }
+        }, 2000);
         renderGame();
         renderCenter();
-        if (currentPlayer.hand.length === 0) {
-          alert(`${currentPlayer.name} gana la partida.`);
-          initializeGame();
-          return;
-        }
+        return;
+      } else {
         nextPlayer();
         updateTurnInfo();
         if (players[currentPlayerIndex].type === "cpu") {
           setTimeout(cpuTurn, 2000);
         }
-      }, 2000);
-      renderGame();
-      renderCenter();
+      }
+    });
+  } else {
+    renderGame();
+    renderCenter();
+    if (currentPlayer.hand.length === 0) {
+      alert(`${currentPlayer.name} gana la partida.`);
+      initializeGame();
       return;
     }
-  }
-  
-  renderGame();
-  renderCenter();
-  
-  if (currentPlayer.hand.length === 0) {
-    alert(`${currentPlayer.name} gana la partida.`);
-    initializeGame();
-    return;
-  }
-  
-  nextPlayer();
-  updateTurnInfo();
-  if (players[currentPlayerIndex].type === "cpu") {
-    setTimeout(cpuTurn, 2000);
+    nextPlayer();
+    updateTurnInfo();
+    if (players[currentPlayerIndex].type === "cpu") {
+      setTimeout(cpuTurn, 2000);
+    }
   }
 }
 
-/* Aplica el efecto de robar cartas pendientes */
+/* Aplica el efecto de robar cartas pendientes (se anima cada robo de forma secuencial) */
 function applyPendingDraw(player) {
-  for (let i = 0; i < pendingDraw; i++) {
-    player.hand.push(drawCardFromDeck());
-  }
-  logMove(`${player.name} robó ${pendingDraw} carta(s).`);
+  let count = pendingDraw;
   pendingDraw = 0;
-  renderGame();
-  nextPlayer();
-  updateTurnInfo();
-  if (players[currentPlayerIndex].type === "cpu") {
-    setTimeout(cpuTurn, 2000);
+  function drawNext(i) {
+    if (i < count) {
+      let card = drawCardFromDeck();
+      animateDrawCard(player, card, function() {
+        player.hand.push(card);
+        logMove(`${player.name} robó una carta.`);
+        renderGame();
+        drawNext(i + 1);
+      });
+    } else {
+      nextPlayer();
+      updateTurnInfo();
+      if (players[currentPlayerIndex].type === "cpu") {
+        setTimeout(cpuTurn, 2000);
+      }
+    }
   }
+  drawNext(0);
 }
 
-/* Robo de carta del mazo, rebarajando si es necesario */
+/* Función auxiliar para robar una carta, rebarajando si es necesario */
 function drawCardFromDeck() {
   let card = deck.shift();
   if (!card) {
@@ -485,6 +539,43 @@ function drawCardFromDeck() {
     card = deck.shift();
   }
   return card;
+}
+
+/* Función para animar el robo de una carta: crea un elemento que se mueve desde el mazo hasta el área del jugador */
+function animateDrawCard(player, drawnCard, callback) {
+  let deckElem = document.getElementById("deck");
+  let target;
+  if (player.type === "human") {
+    target = document.getElementById("player-bottom");
+  } else {
+    target = document.getElementById("cpu-player-" + player.id);
+  }
+  let cardElem = document.createElement("div");
+  cardElem.className = "card animated-card";
+  cardElem.style.backgroundImage = deckElem.style.backgroundImage;
+  cardElem.style.backgroundSize = deckElem.style.backgroundSize;
+  cardElem.style.position = "fixed";
+  let deckRect = deckElem.getBoundingClientRect();
+  cardElem.style.left = deckRect.left + "px";
+  cardElem.style.top = deckRect.top + "px";
+  cardElem.style.width = deckRect.width + "px";
+  cardElem.style.height = deckRect.height + "px";
+  cardElem.style.transition = "all 0.8s ease-out";
+  document.body.appendChild(cardElem);
+  
+  let targetRect = target.getBoundingClientRect();
+  let targetX = targetRect.left + (targetRect.width - deckRect.width) / 2;
+  let targetY = targetRect.top + (targetRect.height - deckRect.height) / 2;
+  
+  // Forzar reflow
+  cardElem.offsetWidth;
+  cardElem.style.left = targetX + "px";
+  cardElem.style.top = targetY + "px";
+  
+  cardElem.addEventListener("transitionend", function() {
+    cardElem.remove();
+    callback();
+  });
 }
 
 window.onload = initializeGame;
