@@ -50,7 +50,7 @@ function initializeGame() {
   direction = 1;
   currentColor = "";
 
-  // Configurar jugadores: id 0 es humano; 1,2,3 son CPU con nombres fijos
+  // Configurar jugadores: id 0 = humano; 1,2,3 = CPU (con nombres fijos)
   players = [
     { id: 0, name: "Tú", type: "human", hand: [] },
     { id: 1, name: "Messi", type: "cpu", hand: [], avatar: "imagenes/cpu1.png" },
@@ -65,7 +65,7 @@ function initializeGame() {
     });
   }
   
-  // Elegir la primera carta para la pila de descarte (que no sea comodín)
+  // Seleccionar la primera carta para la pila de descarte (que no sea comodín)
   let firstCard;
   do {
     firstCard = deck.shift();
@@ -78,27 +78,26 @@ function initializeGame() {
     }
   } while (true);
   
-  // Elegir al azar quién comienza
+  // Escoger al azar quién comienza
   currentPlayerIndex = Math.floor(Math.random() * players.length);
   renderGame();
   renderCenter();
   updateTurnInfo();
   document.getElementById("log").innerHTML = ""; // Limpiar historial
 
-  // Si el primer turno es de CPU, iniciar después de 2 segundos
+  // Si el primer turno es CPU, iniciarlo con retardo
   if (players[currentPlayerIndex].type === "cpu") {
     setTimeout(cpuTurn, 2000);
   }
 }
 
-/* ACTUALIZAR INFORMACIÓN DE TURNO */
+/* FUNCIONES DE UTILIDAD */
 function updateTurnInfo() {
   const turnInfo = document.getElementById("turn-info");
   let currentPlayer = players[currentPlayerIndex];
   turnInfo.innerText = `Turno: ${currentPlayer.name} | Color actual: ${currentColor.toUpperCase()}`;
 }
 
-/* REGISTRAR UN MENSAJE EN EL HISTORIAL (inserta siempre al principio) */
 function logMove(message) {
   const logDiv = document.getElementById("log");
   const p = document.createElement("p");
@@ -106,7 +105,6 @@ function logMove(message) {
   logDiv.insertBefore(p, logDiv.firstChild);
 }
 
-/* DEVUELVE UNA DESCRIPCIÓN LEGIBLE DE UNA CARTA */
 function getCardDescription(card) {
   if (card.tipo === "numero") return `${card.numero} de ${card.color}`;
   if (card.tipo === "skip") return `Salta (${card.color})`;
@@ -117,7 +115,7 @@ function getCardDescription(card) {
   return "";
 }
 
-/* SELECCIÓN DE COLOR CON OVERLAY (DEVUELVE PROMESA CON COLOR) */
+/* SELECCIÓN DE COLOR CON OVERLAY (DEVUELVE PROMESA CON EL COLOR SELECCIONADO) */
 function chooseColor() {
   return new Promise((resolve) => {
     const picker = document.getElementById("color-picker");
@@ -135,7 +133,16 @@ function chooseColor() {
   });
 }
 
-/* RENDERIZAR LA INTERFAZ */
+/* TERMINAR EL TURNO: avanza el turno y, si es CPU, llama a cpuTurn con retardo */
+function endTurn() {
+  nextPlayer();
+  updateTurnInfo();
+  if (players[currentPlayerIndex].type === "cpu") {
+    setTimeout(cpuTurn, 2000);
+  }
+}
+
+/* RENDERIZACIÓN DE LA INTERFAZ */
 function renderGame() {
   renderCpuPlayers();
   renderHumanPlayer();
@@ -208,7 +215,7 @@ function isValidMove(card) {
 
 /* PROCESAR LOS EFECTOS DE LA CARTA JUGADA */
 function processCardEffect(card, player, skipColorSelection = false) {
-  // Si la carta no es comodín, actualiza el color
+  // Si la carta no es comodín, actualizar el color
   if (card.tipo !== "wild" && card.tipo !== "wildDraw4") {
     currentColor = card.color;
   }
@@ -227,7 +234,7 @@ function processCardEffect(card, player, skipColorSelection = false) {
       const opciones = ["rojo", "verde", "azul", "amarillo"];
       currentColor = opciones[Math.floor(Math.random() * opciones.length)];
     }
-    // Para humano, currentColor se habrá establecido mediante chooseColor
+    // Para humano, currentColor se establece mediante chooseColor()
   }
   if (card.tipo === "wildDraw4") {
     pendingDraw += 4;
@@ -250,221 +257,7 @@ function nextPlayer() {
   currentPlayerIndex = nextIndex;
 }
 
-/* ANIMAR EL ROBO DE UNA CARTA (mueve un elemento desde el mazo hasta el área del jugador) */
-function animateDrawCard(player, callback) {
-  let deckElem = document.getElementById("deck");
-  let target = (player.type === "human")
-    ? document.getElementById("player-bottom")
-    : document.getElementById("cpu-player-" + player.id);
-  let cardElem = document.createElement("div");
-  cardElem.className = "card animated-card";
-  cardElem.style.backgroundImage = deckElem.style.backgroundImage;
-  cardElem.style.backgroundSize = deckElem.style.backgroundSize;
-  cardElem.style.position = "fixed";
-  let deckRect = deckElem.getBoundingClientRect();
-  cardElem.style.left = deckRect.left + "px";
-  cardElem.style.top = deckRect.top + "px";
-  cardElem.style.width = deckRect.width + "px";
-  cardElem.style.height = deckRect.height + "px";
-  cardElem.style.transition = "all 0.8s ease-out";
-  document.body.appendChild(cardElem);
-  let targetRect = target.getBoundingClientRect();
-  let targetX = targetRect.left + (targetRect.width - deckRect.width) / 2;
-  let targetY = targetRect.top + (targetRect.height - deckRect.height) / 2;
-  // Forzar reflow para activar la transición
-  cardElem.offsetWidth;
-  cardElem.style.left = targetX + "px";
-  cardElem.style.top = targetY + "px";
-  cardElem.addEventListener("transitionend", function() {
-    cardElem.remove();
-    callback();
-  });
-}
-
-/* TURNO DEL JUGADOR HUMANO */
-function humanPlayCard(cardIndex) {
-  let currentPlayer = players[currentPlayerIndex];
-  let card = currentPlayer.hand[cardIndex];
-  if (!isValidMove(card)) {
-    alert("Movimiento inválido. Elige otra carta o roba una.");
-    return;
-  }
-  currentPlayer.hand.splice(cardIndex, 1);
-  discardPile.push(card);
-  if ((card.tipo === "wild" || card.tipo === "wildDraw4") && currentPlayer.type === "human") {
-    // Usar overlay para elegir color (sin prompt)
-    chooseColor().then(chosenColor => {
-      currentColor = chosenColor;
-      processCardEffect(card, currentPlayer, true);
-      logMove(`Tú jugaste: ${getCardDescription(card)} y cambiaste el color a ${currentColor.toUpperCase()}`);
-      renderGame();
-      renderCenter();
-      if (currentPlayer.hand.length === 0) {
-        alert("¡Felicidades, ganaste!");
-        initializeGame();
-        return;
-      }
-      if (pendingDraw > 0) {
-        nextPlayer();
-        applyPendingDraw(players[currentPlayerIndex]);
-        return;
-      }
-      nextPlayer();
-      updateTurnInfo();
-    });
-  } else {
-    processCardEffect(card, currentPlayer);
-    logMove(`Tú jugaste: ${getCardDescription(card)}`);
-    renderGame();
-    renderCenter();
-    if (currentPlayer.hand.length === 0) {
-      alert("¡Felicidades, ganaste!");
-      initializeGame();
-      return;
-    }
-    if (pendingDraw > 0) {
-      nextPlayer();
-      applyPendingDraw(players[currentPlayerIndex]);
-      return;
-    }
-    nextPlayer();
-    updateTurnInfo();
-  }
-}
-
-/* ROBAR CARTA PARA HUMANO CON ANIMACIÓN */
-function humanDrawCard() {
-  if (players[currentPlayerIndex].type !== "human") return;
-  let drawnCard = drawCardFromDeck();
-  animateDrawCard(players[currentPlayerIndex], function() {
-    players[currentPlayerIndex].hand.push(drawnCard);
-    logMove("Tú robaste una carta.");
-    renderGame();
-    if (isValidMove(drawnCard)) {
-      if (confirm("¿Quieres jugar la carta que robaste?")) {
-        humanPlayCard(players[currentPlayerIndex].hand.length - 1);
-        return;
-      }
-    }
-    nextPlayer();
-    updateTurnInfo();
-  });
-}
-
-/* TURNO DE LA CPU (versión simplificada) */
-function cpuTurn() {
-  let currentPlayer = players[currentPlayerIndex];
-  // Si hay efecto pendiente, aplicarlo y terminar turno
-  if (pendingDraw > 0) {
-    applyPendingDraw(currentPlayer);
-    return;
-  }
-  // Buscar una carta jugable en la mano
-  let cardIndex = currentPlayer.hand.findIndex(card => isValidMove(card));
-  if (cardIndex !== -1) {
-    let card = currentPlayer.hand.splice(cardIndex, 1)[0];
-    discardPile.push(card);
-    processCardEffect(card, currentPlayer);
-    let nextIndex = (currentPlayerIndex + direction + players.length) % players.length;
-    let message = `${currentPlayer.name} jugó: ${getCardDescription(card)}`;
-    if (card.tipo === "skip") message += ` y saltó a ${players[nextIndex].name}`;
-    else if (card.tipo === "draw2") message += ` y obligó a ${players[nextIndex].name} a robar 2 cartas`;
-    else if (card.tipo === "wild") message += ` y cambió el color a ${currentColor.toUpperCase()}`;
-    else if (card.tipo === "wildDraw4") message += ` y obligó a ${players[nextIndex].name} a robar 4 cartas y cambió el color a ${currentColor.toUpperCase()}`;
-    else if (card.tipo === "reverse") message += ` y cambió la dirección`;
-    logMove(message);
-    renderGame();
-    renderCenter();
-    if (currentPlayer.hand.length === 0) {
-      alert(`${currentPlayer.name} gana la partida.`);
-      initializeGame();
-      return;
-    }
-    nextPlayer();
-    updateTurnInfo();
-    setTimeout(cpuTurn, 2000);
-  } else {
-    // Si no hay carta jugable, robar 1 carta
-    let drawnCard = drawCardFromDeck();
-    animateDrawCard(currentPlayer, function() {
-      currentPlayer.hand.push(drawnCard);
-      logMove(`${currentPlayer.name} robó una carta.`);
-      renderGame();
-      if (isValidMove(drawnCard)) {
-        // Jugar la carta robada automáticamente
-        setTimeout(() => {
-          let idx = currentPlayer.hand.indexOf(drawnCard);
-          if (idx !== -1) {
-            currentPlayer.hand.splice(idx, 1);
-            discardPile.push(drawnCard);
-            processCardEffect(drawnCard, currentPlayer);
-            let nextIndex = (currentPlayerIndex + direction + players.length) % players.length;
-            let message = `${currentPlayer.name} robó y jugó: ${getCardDescription(drawnCard)}`;
-            if (drawnCard.tipo === "skip") message += ` y saltó a ${players[nextIndex].name}`;
-            else if (drawnCard.tipo === "draw2") message += ` y obligó a ${players[nextIndex].name} a robar 2 cartas`;
-            else if (drawnCard.tipo === "wild") message += ` y cambió el color a ${currentColor.toUpperCase()}`;
-            else if (drawnCard.tipo === "wildDraw4") message += ` y obligó a ${players[nextIndex].name} a robar 4 cartas y cambió el color a ${currentColor.toUpperCase()}`;
-            else if (drawnCard.tipo === "reverse") message += ` y cambió la dirección`;
-            logMove(message);
-            renderGame();
-            renderCenter();
-            if (currentPlayer.hand.length === 0) {
-              alert(`${currentPlayer.name} gana la partida.`);
-              initializeGame();
-              return;
-            }
-            nextPlayer();
-            updateTurnInfo();
-            setTimeout(cpuTurn, 2000);
-          }
-        }, 2000);
-      } else {
-        nextPlayer();
-        updateTurnInfo();
-        setTimeout(cpuTurn, 2000);
-      }
-    });
-  }
-}
-
-/* APLICAR EFECTO DE ROBAR CARTAS PENDIENTES (se ejecuta solo una vez por turno) */
-function applyPendingDraw(player) {
-  let count = pendingDraw;
-  pendingDraw = 0; // Se resetea para que no se acumulen
-  function drawNext(i) {
-    if (i < count) {
-      let card = drawCardFromDeck();
-      animateDrawCard(player, function() {
-        player.hand.push(card);
-        logMove(`${player.name} robó una carta.`);
-        renderGame();
-        drawNext(i + 1);
-      });
-    } else {
-      nextPlayer();
-      updateTurnInfo();
-      if (players[currentPlayerIndex].type === "cpu") {
-        setTimeout(cpuTurn, 2000);
-      }
-    }
-  }
-  drawNext(0);
-}
-
-/* ROBAR CARTA DEL MAZO (rebaraja la pila de descarte si es necesario) */
-function drawCardFromDeck() {
-  let card = deck.shift();
-  if (!card) {
-    let top = discardPile.pop();
-    deck = discardPile;
-    shuffle(deck);
-    discardPile = [top];
-    card = deck.shift();
-  }
-  return card;
-}
-
-/* ANIMAR EL ROBO: crea un elemento que se mueve desde el mazo hasta el área del jugador */
+/* ANIMAR EL ROBO DE UNA CARTA: crea un elemento que se mueve desde el mazo hasta el área del jugador */
 function animateDrawCard(player, callback) {
   let deckElem = document.getElementById("deck");
   let target = (player.type === "human")
@@ -494,5 +287,58 @@ function animateDrawCard(player, callback) {
   });
 }
 
-/* INICIAR EL JUEGO AL CARGAR LA PÁGINA */
-window.onload = initializeGame;
+/* TURNO DEL JUGADOR HUMANO */
+function humanPlayCard(cardIndex) {
+  let currentPlayer = players[currentPlayerIndex];
+  let card = currentPlayer.hand[cardIndex];
+  if (!isValidMove(card)) {
+    alert("Movimiento inválido. Elige otra carta o roba una.");
+    return;
+  }
+  currentPlayer.hand.splice(cardIndex, 1);
+  discardPile.push(card);
+  if ((card.tipo === "wild" || card.tipo === "wildDraw4") && currentPlayer.type === "human") {
+    chooseColor().then(chosenColor => {
+      currentColor = chosenColor;
+      processCardEffect(card, currentPlayer, true);
+      logMove(`Tú jugaste: ${getCardDescription(card)} y cambiaste el color a ${currentColor.toUpperCase()}`);
+      renderGame();
+      renderCenter();
+      if (currentPlayer.hand.length === 0) {
+        alert("¡Felicidades, ganaste!");
+        initializeGame();
+        return;
+      }
+      if (pendingDraw > 0) {
+        applyPendingDraw(currentPlayer, endTurn);
+      } else {
+        endTurn();
+      }
+    });
+  } else {
+    processCardEffect(card, currentPlayer);
+    logMove(`Tú jugaste: ${getCardDescription(card)}`);
+    renderGame();
+    renderCenter();
+    if (currentPlayer.hand.length === 0) {
+      alert("¡Felicidades, ganaste!");
+      initializeGame();
+      return;
+    }
+    if (pendingDraw > 0) {
+      applyPendingDraw(currentPlayer, endTurn);
+    } else {
+      endTurn();
+    }
+  }
+}
+
+/* ROBAR CARTA PARA HUMANO CON ANIMACIÓN (NO SE AUTO-PLAY) */
+function humanDrawCard() {
+  if (players[currentPlayerIndex].type !== "human") return;
+  let drawnCard = drawCardFromDeck();
+  animateDrawCard(players[currentPlayerIndex], function() {
+    players[currentPlayerIndex].hand.push(drawnCard);
+    logMove("Tú robaste una carta.");
+    renderGame();
+    // En turno humano, no se auto-juega la carta robada; el jugador debe elegir manualmente
