@@ -12,7 +12,7 @@ let currentColor = "";
 function buildDeck() {
   let newDeck = [];
   const colores = ["rojo", "verde", "azul", "amarillo"];
-  // Cartas numéricas y especiales
+  // Cartas numéricas y cartas especiales (skip, reverse, draw2)
   colores.forEach(color => {
     newDeck.push({ color: color, tipo: "numero", numero: 0 });
     for (let i = 1; i <= 9; i++) {
@@ -50,7 +50,7 @@ function initializeGame() {
   direction = 1;
   currentColor = "";
 
-  // Configurar jugadores: id 0 = humano; 1,2,3 = CPU (con nombres fijos)
+  // Configurar jugadores: id 0 es humano; 1,2,3 son CPU con nombres fijos
   players = [
     { id: 0, name: "Tú", type: "human", hand: [] },
     { id: 1, name: "Messi", type: "cpu", hand: [], avatar: "imagenes/cpu1.png" },
@@ -65,7 +65,7 @@ function initializeGame() {
     });
   }
   
-  // Seleccionar la primera carta para la pila de descarte (que no sea comodín)
+  // Elegir la primera carta para la pila de descarte (que no sea comodín)
   let firstCard;
   do {
     firstCard = deck.shift();
@@ -85,26 +85,44 @@ function initializeGame() {
   updateTurnInfo();
   document.getElementById("log").innerHTML = ""; // Limpiar historial
 
-  // Si el primer turno es CPU, iniciarlo con retardo
-  if (players[currentPlayerIndex].type === "cpu") {
-    setTimeout(cpuTurn, 2000);
+  // Iniciar turno
+  startTurn();
+}
+
+/* INICIAR TURNO: Si hay pendingDraw se aplica, de lo contrario, se espera input (o se auto-juega la CPU) */
+function startTurn() {
+  updateTurnInfo();
+  let currentPlayer = players[currentPlayerIndex];
+  if (pendingDraw > 0) {
+    applyPendingDraw(currentPlayer, function(){
+      endTurn();
+    });
+  } else {
+    if (currentPlayer.type === "cpu") {
+      setTimeout(cpuTurn, 2000);
+    }
+    // Si es humano, se espera que el jugador actúe (haciendo clic en sus cartas o en el mazo)
   }
 }
 
-/* FUNCIONES DE UTILIDAD */
+/* TERMINAR TURNO: avanza el turno y llama a startTurn() para el siguiente jugador */
+function endTurn() {
+  nextPlayer();
+  startTurn();
+}
+
+/* UTILIDADES DE INTERFAZ */
 function updateTurnInfo() {
   const turnInfo = document.getElementById("turn-info");
   let currentPlayer = players[currentPlayerIndex];
   turnInfo.innerText = `Turno: ${currentPlayer.name} | Color actual: ${currentColor.toUpperCase()}`;
 }
-
 function logMove(message) {
   const logDiv = document.getElementById("log");
   const p = document.createElement("p");
   p.textContent = message;
   logDiv.insertBefore(p, logDiv.firstChild);
 }
-
 function getCardDescription(card) {
   if (card.tipo === "numero") return `${card.numero} de ${card.color}`;
   if (card.tipo === "skip") return `Salta (${card.color})`;
@@ -115,7 +133,7 @@ function getCardDescription(card) {
   return "";
 }
 
-/* SELECCIÓN DE COLOR CON OVERLAY (DEVUELVE PROMESA CON EL COLOR SELECCIONADO) */
+/* SELECCIÓN DE COLOR CON OVERLAY (DEVUELVE PROMESA CON COLOR) */
 function chooseColor() {
   return new Promise((resolve) => {
     const picker = document.getElementById("color-picker");
@@ -131,15 +149,6 @@ function chooseColor() {
       opt.addEventListener("click", handler);
     });
   });
-}
-
-/* TERMINAR EL TURNO: avanza el turno y, si es CPU, llama a cpuTurn con retardo */
-function endTurn() {
-  nextPlayer();
-  updateTurnInfo();
-  if (players[currentPlayerIndex].type === "cpu") {
-    setTimeout(cpuTurn, 2000);
-  }
 }
 
 /* RENDERIZACIÓN DE LA INTERFAZ */
@@ -183,7 +192,9 @@ function renderHumanPlayer() {
     else if (card.tipo === "wild") cardDiv.innerText = "✳";
     else if (card.tipo === "wildDraw4") cardDiv.innerText = "+4";
     cardDiv.onclick = function() {
-      if (players[currentPlayerIndex].type === "human") humanPlayCard(index);
+      if (players[currentPlayerIndex].type === "human") {
+        humanPlayCard(index);
+      }
     };
     humanDiv.appendChild(cardDiv);
   });
@@ -213,9 +224,8 @@ function isValidMove(card) {
   return false;
 }
 
-/* PROCESAR LOS EFECTOS DE LA CARTA JUGADA */
+/* PROCESAR LOS EFECTOS DE LA CARTA */
 function processCardEffect(card, player, skipColorSelection = false) {
-  // Si la carta no es comodín, actualizar el color
   if (card.tipo !== "wild" && card.tipo !== "wildDraw4") {
     currentColor = card.color;
   }
@@ -234,7 +244,7 @@ function processCardEffect(card, player, skipColorSelection = false) {
       const opciones = ["rojo", "verde", "azul", "amarillo"];
       currentColor = opciones[Math.floor(Math.random() * opciones.length)];
     }
-    // Para humano, currentColor se establece mediante chooseColor()
+    // Para humano, currentColor se habrá establecido mediante chooseColor()
   }
   if (card.tipo === "wildDraw4") {
     pendingDraw += 4;
@@ -257,7 +267,39 @@ function nextPlayer() {
   currentPlayerIndex = nextIndex;
 }
 
-/* ANIMAR EL ROBO DE UNA CARTA: crea un elemento que se mueve desde el mazo hasta el área del jugador */
+/* APLICAR LOS EFECTOS DE ROBAR (si pendingDraw > 0, se roban EXACTAMENTE pendingDraw cartas) */
+function applyPendingDraw(player, callback) {
+  let count = pendingDraw;
+  pendingDraw = 0; // Se resetea para no acumular
+  function drawNext(i) {
+    if (i < count) {
+      animateDrawCard(player, function() {
+        player.hand.push(drawCardFromDeck());
+        logMove(`${player.name} robó una carta.`);
+        renderGame();
+        drawNext(i + 1);
+      });
+    } else {
+      callback();
+    }
+  }
+  drawNext(0);
+}
+
+/* ROBAR CARTA (si el mazo se agota, rebarajar la pila de descarte) */
+function drawCardFromDeck() {
+  let card = deck.shift();
+  if (!card) {
+    let top = discardPile.pop();
+    deck = discardPile;
+    shuffle(deck);
+    discardPile = [top];
+    card = deck.shift();
+  }
+  return card;
+}
+
+/* ANIMAR EL ROBO: mueve un elemento desde el mazo hasta el área del jugador */
 function animateDrawCard(player, callback) {
   let deckElem = document.getElementById("deck");
   let target = (player.type === "human")
@@ -309,11 +351,8 @@ function humanPlayCard(cardIndex) {
         initializeGame();
         return;
       }
-      if (pendingDraw > 0) {
-        applyPendingDraw(currentPlayer, endTurn);
-      } else {
-        endTurn();
-      }
+      // Finalizar turno después de jugar
+      endTurn();
     });
   } else {
     processCardEffect(card, currentPlayer);
@@ -325,15 +364,11 @@ function humanPlayCard(cardIndex) {
       initializeGame();
       return;
     }
-    if (pendingDraw > 0) {
-      applyPendingDraw(currentPlayer, endTurn);
-    } else {
-      endTurn();
-    }
+    endTurn();
   }
 }
 
-/* ROBAR CARTA PARA HUMANO CON ANIMACIÓN (NO SE AUTO-PLAY) */
+/* ROBAR CARTA PARA HUMANO CON ANIMACIÓN (se roba exactamente 1 carta) */
 function humanDrawCard() {
   if (players[currentPlayerIndex].type !== "human") return;
   let drawnCard = drawCardFromDeck();
@@ -341,7 +376,7 @@ function humanDrawCard() {
     players[currentPlayerIndex].hand.push(drawnCard);
     logMove("Tú robaste una carta.");
     renderGame();
-    // En turno humano, no se auto-juega la carta robada; el jugador debe elegir manualmente.
+    // No auto-play: el jugador debe decidir
     endTurn();
   });
 }
@@ -382,7 +417,7 @@ function cpuTurn() {
       currentPlayer.hand.push(drawnCard);
       logMove(`${currentPlayer.name} robó una carta.`);
       renderGame();
-      // Si la carta robada es jugable, se la juega automáticamente
+      // Si la carta robada es jugable, se juega automáticamente
       if (isValidMove(drawnCard)) {
         setTimeout(() => {
           let idx = currentPlayer.hand.indexOf(drawnCard);
@@ -405,8 +440,8 @@ function cpuTurn() {
               initializeGame();
               return;
             }
-            endTurn();
           }
+          endTurn();
         }, 2000);
       } else {
         endTurn();
@@ -415,40 +450,7 @@ function cpuTurn() {
   }
 }
 
-/* APLICAR EFECTO DE ROBAR CARTAS PENDIENTES (se ejecuta una sola vez por turno) */
-function applyPendingDraw(player, callback) {
-  let count = pendingDraw;
-  pendingDraw = 0; // Reseteamos pendingDraw para evitar acumulaciones
-  function drawNext(i) {
-    if (i < count) {
-      let card = drawCardFromDeck();
-      animateDrawCard(player, function() {
-        player.hand.push(card);
-        logMove(`${player.name} robó una carta.`);
-        renderGame();
-        drawNext(i + 1);
-      });
-    } else {
-      callback();
-    }
-  }
-  drawNext(0);
-}
-
-/* ROBAR CARTA DEL MAZO (si el mazo se agota, rebarajar la pila de descarte) */
-function drawCardFromDeck() {
-  let card = deck.shift();
-  if (!card) {
-    let top = discardPile.pop();
-    deck = discardPile;
-    shuffle(deck);
-    discardPile = [top];
-    card = deck.shift();
-  }
-  return card;
-}
-
-/* ANIMAR EL ROBO: mueve un elemento desde el mazo hasta el área del jugador */
+/* ANIMAR EL ROBO: crea un elemento que se mueve desde el mazo hasta el área del jugador */
 function animateDrawCard(player, callback) {
   let deckElem = document.getElementById("deck");
   let target = (player.type === "human")
@@ -476,6 +478,19 @@ function animateDrawCard(player, callback) {
     cardElem.remove();
     callback();
   });
+}
+
+/* ROBAR CARTA DEL MAZO (si se agota, rebarajar la pila de descarte) */
+function drawCardFromDeck() {
+  let card = deck.shift();
+  if (!card) {
+    let top = discardPile.pop();
+    deck = discardPile;
+    shuffle(deck);
+    discardPile = [top];
+    card = deck.shift();
+  }
+  return card;
 }
 
 /* INICIAR EL JUEGO AL CARGAR LA PÁGINA */
