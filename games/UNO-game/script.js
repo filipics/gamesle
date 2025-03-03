@@ -1,497 +1,124 @@
-/* VARIABLES GLOBALES */
-let players = [];
-let currentPlayerIndex = 0; // Índice del jugador actual
-let direction = 1; // 1 = sentido horario, -1 = antihorario
+// Variables y funciones básicas para crear y barajar el mazo
 let deck = [];
-let discardPile = [];
-let pendingDraw = 0; // Cantidad de cartas que debe robar el siguiente jugador (por +2 o +4)
-let skipNext = false;
-let currentColor = "";
+const colores = ['rojo', 'amarillo', 'verde', 'azul'];
+const numeros = ['0','1','2','3','4','5','6','7','8','9'];
 
-/* CONSTRUCCIÓN DEL MAZO */
-function buildDeck() {
-  let newDeck = [];
-  const colores = ["rojo", "verde", "azul", "amarillo"];
-  // Cartas numéricas y cartas especiales (skip, reverse, draw2)
+function crearDeck() {
+  deck = [];
   colores.forEach(color => {
-    newDeck.push({ color: color, tipo: "numero", numero: 0 });
-    for (let i = 1; i <= 9; i++) {
-      newDeck.push({ color: color, tipo: "numero", numero: i });
-      newDeck.push({ color: color, tipo: "numero", numero: i });
-    }
-    ["skip", "reverse", "draw2"].forEach(tipo => {
-      newDeck.push({ color: color, tipo: tipo });
-      newDeck.push({ color: color, tipo: tipo });
+    numeros.forEach(numero => {
+      deck.push({ color, numero });
+      if (numero !== '0') {
+        deck.push({ color, numero }); // Dos cartas para cada número, excepto el 0
+      }
+    });
+    // Agregar cartas especiales: skip, reverse, drawTwo
+    ['skip', 'reverse', 'drawTwo'].forEach(tipo => {
+      deck.push({ color, numero: tipo });
+      deck.push({ color, numero: tipo });
     });
   });
-  // Cartas comodín
+  // Agregar cartas comodín (wild y wildDrawFour)
   for (let i = 0; i < 4; i++) {
-    newDeck.push({ color: "comodin", tipo: "wild" });
-    newDeck.push({ color: "comodin", tipo: "wildDraw4" });
+    deck.push({ color: 'comodin', numero: 'wild' });
+    deck.push({ color: 'comodin', numero: 'wildDrawFour' });
   }
-  return newDeck;
 }
 
-/* BARAJAR (Fisher-Yates) */
 function shuffle(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    let j = Math.floor(Math.random() * (i + 1));
+  for (let i = array.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
   }
 }
 
-/* INICIALIZAR EL JUEGO */
-function initializeGame() {
-  deck = buildDeck();
-  shuffle(deck);
-  discardPile = [];
-  pendingDraw = 0;
-  skipNext = false;
-  direction = 1;
-  currentColor = "";
+// Variables para las manos y la pila de descartes
+let playerHand = [];
+let computerHand = [];
+let discardPile = [];
 
-  // Configurar jugadores: id 0 es humano; 1,2,3 son CPU con nombres fijos
-  players = [
-    { id: 0, name: "Tú", type: "human", hand: [] },
-    { id: 1, name: "Messi", type: "cpu", hand: [], avatar: "imagenes/cpu1.png" },
-    { id: 2, name: "Cristiano", type: "cpu", hand: [], avatar: "imagenes/cpu2.png" },
-    { id: 3, name: "Neymar", type: "cpu", hand: [], avatar: "imagenes/cpu3.png" }
-  ];
-  
-  // Repartir 7 cartas a cada jugador
+// Repartir 7 cartas a cada uno y sacar la primera carta para iniciar el descarte
+function repartirCartas() {
   for (let i = 0; i < 7; i++) {
-    players.forEach(player => {
-      player.hand.push(deck.shift());
-    });
+    playerHand.push(deck.pop());
+    computerHand.push(deck.pop());
   }
+  discardPile.push(deck.pop());
+}
+
+// Actualizar la interfaz con las cartas actuales
+function renderHands() {
+  // Mostrar cartas del jugador
+  const playerDiv = document.querySelector('#player-hand .cards');
+  playerDiv.innerHTML = '';
+  playerHand.forEach((carta, index) => {
+    const cardElem = document.createElement('div');
+    cardElem.className = 'card';
+    cardElem.textContent = `${carta.color} ${carta.numero}`;
+    cardElem.addEventListener('click', () => jugarCarta(index));
+    playerDiv.appendChild(cardElem);
+  });
   
-  // Elegir la primera carta para la pila de descarte (que no sea comodín)
-  let firstCard;
-  do {
-    firstCard = deck.shift();
-    if (firstCard.tipo === "wild" || firstCard.tipo === "wildDraw4") {
-      deck.push(firstCard);
-    } else {
-      discardPile.push(firstCard);
-      currentColor = firstCard.color;
+  // Mostrar cartas de la PC como reverso
+  const computerDiv = document.querySelector('#computer-hand .cards');
+  computerDiv.innerHTML = '';
+  computerHand.forEach(() => {
+    const cardElem = document.createElement('div');
+    cardElem.className = 'card';
+    cardElem.textContent = '🂠';
+    computerDiv.appendChild(cardElem);
+  });
+  
+  // Mostrar la última carta en la pila de descartes
+  const discardDiv = document.querySelector('#discard-pile .card');
+  const ultimaCarta = discardPile[discardPile.length - 1];
+  discardDiv.textContent = `${ultimaCarta.color} ${ultimaCarta.numero}`;
+}
+
+// Función para jugar una carta desde la mano del jugador
+function jugarCarta(index) {
+  const carta = playerHand[index];
+  const ultimaCarta = discardPile[discardPile.length - 1];
+  // Se permite jugar si la carta es comodín o coincide en color o número
+  if (carta.color === 'comodin' || carta.color === ultimaCarta.color || carta.numero === ultimaCarta.numero) {
+    discardPile.push(carta);
+    playerHand.splice(index, 1);
+    renderHands();
+    setTimeout(turnoComputadora, 1000); // Turno de la PC
+  } else {
+    alert("No puedes jugar esa carta");
+  }
+}
+
+// Lógica básica para el turno de la PC
+function turnoComputadora() {
+  const ultimaCarta = discardPile[discardPile.length - 1];
+  let jugadaRealizada = false;
+  for (let i = 0; i < computerHand.length; i++) {
+    const carta = computerHand[i];
+    if (carta.color === 'comodin' || carta.color === ultimaCarta.color || carta.numero === ultimaCarta.numero) {
+      discardPile.push(carta);
+      computerHand.splice(i, 1);
+      jugadaRealizada = true;
       break;
     }
-  } while (true);
-  
-  // Escoger al azar quién comienza
-  currentPlayerIndex = Math.floor(Math.random() * players.length);
-  renderGame();
-  renderCenter();
-  updateTurnInfo();
-  document.getElementById("log").innerHTML = ""; // Limpiar historial
-
-  // Iniciar turno
-  startTurn();
-}
-
-/* INICIAR TURNO: Si hay pendingDraw se aplica, de lo contrario, se espera input (o se auto-juega la CPU) */
-function startTurn() {
-  updateTurnInfo();
-  let currentPlayer = players[currentPlayerIndex];
-  if (pendingDraw > 0) {
-    applyPendingDraw(currentPlayer, function(){
-      endTurn();
-    });
-  } else {
-    if (currentPlayer.type === "cpu") {
-      setTimeout(cpuTurn, 2000);
-    }
-    // Si es humano, se espera que el jugador actúe (haciendo clic en sus cartas o en el mazo)
   }
-}
-
-/* TERMINAR TURNO: avanza el turno y llama a startTurn() para el siguiente jugador */
-function endTurn() {
-  nextPlayer();
-  startTurn();
-}
-
-/* UTILIDADES DE INTERFAZ */
-function updateTurnInfo() {
-  const turnInfo = document.getElementById("turn-info");
-  let currentPlayer = players[currentPlayerIndex];
-  turnInfo.innerText = `Turno: ${currentPlayer.name} | Color actual: ${currentColor.toUpperCase()}`;
-}
-function logMove(message) {
-  const logDiv = document.getElementById("log");
-  const p = document.createElement("p");
-  p.textContent = message;
-  logDiv.insertBefore(p, logDiv.firstChild);
-}
-function getCardDescription(card) {
-  if (card.tipo === "numero") return `${card.numero} de ${card.color}`;
-  if (card.tipo === "skip") return `Salta (${card.color})`;
-  if (card.tipo === "reverse") return `Reversa (${card.color})`;
-  if (card.tipo === "draw2") return `+2 (${card.color})`;
-  if (card.tipo === "wild") return `Comodín`;
-  if (card.tipo === "wildDraw4") return `+4 Comodín`;
-  return "";
-}
-
-/* SELECCIÓN DE COLOR CON OVERLAY (DEVUELVE PROMESA CON COLOR) */
-function chooseColor() {
-  return new Promise((resolve) => {
-    const picker = document.getElementById("color-picker");
-    picker.classList.remove("hidden");
-    const options = document.querySelectorAll(".color-option");
-    const handler = (event) => {
-      const color = event.target.getAttribute("data-color");
-      options.forEach(opt => opt.removeEventListener("click", handler));
-      picker.classList.add("hidden");
-      resolve(color);
-    };
-    options.forEach(opt => {
-      opt.addEventListener("click", handler);
-    });
-  });
-}
-
-/* RENDERIZACIÓN DE LA INTERFAZ */
-function renderGame() {
-  renderCpuPlayers();
-  renderHumanPlayer();
-}
-function renderCpuPlayers() {
-  const cpuContainer = document.getElementById("cpu-container");
-  cpuContainer.innerHTML = "";
-  players.filter(p => p.type === "cpu").forEach(cpu => {
-    const cpuDiv = document.createElement("div");
-    cpuDiv.className = "cpu-player";
-    cpuDiv.id = "cpu-player-" + cpu.id;
-    const header = document.createElement("h2");
-    header.innerText = cpu.name;
-    cpuDiv.appendChild(header);
-    const avatar = document.createElement("img");
-    avatar.src = cpu.avatar;
-    avatar.alt = cpu.name;
-    avatar.className = "cpu-avatar";
-    cpuDiv.appendChild(avatar);
-    const count = document.createElement("div");
-    count.className = "cpu-count";
-    count.innerText = `Cartas: ${cpu.hand.length}`;
-    cpuDiv.appendChild(count);
-    cpuContainer.appendChild(cpuDiv);
-  });
-}
-function renderHumanPlayer() {
-  const human = players.find(p => p.type === "human");
-  const humanDiv = document.getElementById("player-bottom");
-  humanDiv.innerHTML = "";
-  human.hand.forEach((card, index) => {
-    const cardDiv = document.createElement("div");
-    cardDiv.className = "card " + ((card.color === "comodin") ? "comodin" : card.color);
-    if (card.tipo === "numero") cardDiv.innerText = card.numero;
-    else if (card.tipo === "skip") cardDiv.innerText = "⏭";
-    else if (card.tipo === "reverse") cardDiv.innerText = "🔄";
-    else if (card.tipo === "draw2") cardDiv.innerText = "+2";
-    else if (card.tipo === "wild") cardDiv.innerText = "✳";
-    else if (card.tipo === "wildDraw4") cardDiv.innerText = "+4";
-    cardDiv.onclick = function() {
-      if (players[currentPlayerIndex].type === "human") {
-        humanPlayCard(index);
-      }
-    };
-    humanDiv.appendChild(cardDiv);
-  });
-}
-function renderCenter() {
-  const discardDiv = document.getElementById("discard-pile");
-  discardDiv.innerHTML = "";
-  let topCard = discardPile[discardPile.length - 1];
-  const cardDiv = document.createElement("div");
-  cardDiv.className = "card " + ((topCard.color === "comodin") ? "comodin" : topCard.color);
-  if (topCard.tipo === "numero") cardDiv.innerText = topCard.numero;
-  else if (topCard.tipo === "skip") cardDiv.innerText = "⏭";
-  else if (topCard.tipo === "reverse") cardDiv.innerText = "🔄";
-  else if (topCard.tipo === "draw2") cardDiv.innerText = "+2";
-  else if (topCard.tipo === "wild") cardDiv.innerText = "✳";
-  else if (topCard.tipo === "wildDraw4") cardDiv.innerText = "+4";
-  discardDiv.appendChild(cardDiv);
-}
-
-/* VERIFICAR SI UNA CARTA ES JUGABLE */
-function isValidMove(card) {
-  let topCard = discardPile[discardPile.length - 1];
-  if (card.tipo === "wild" || card.tipo === "wildDraw4") return true;
-  if (card.color === currentColor) return true;
-  if (card.tipo === "numero" && topCard.tipo === "numero" && card.numero === topCard.numero) return true;
-  if (card.tipo === topCard.tipo && card.tipo !== "numero") return true;
-  return false;
-}
-
-/* PROCESAR LOS EFECTOS DE LA CARTA */
-function processCardEffect(card, player, skipColorSelection = false) {
-  if (card.tipo !== "wild" && card.tipo !== "wildDraw4") {
-    currentColor = card.color;
+  if (!jugadaRealizada) {
+    computerHand.push(deck.pop());
   }
-  if (card.tipo === "skip") {
-    skipNext = true;
-  }
-  if (card.tipo === "reverse") {
-    direction *= -1;
-  }
-  if (card.tipo === "draw2") {
-    pendingDraw += 2;
-    skipNext = true;
-  }
-  if (card.tipo === "wild") {
-    if (player.type === "cpu") {
-      const opciones = ["rojo", "verde", "azul", "amarillo"];
-      currentColor = opciones[Math.floor(Math.random() * opciones.length)];
-    }
-    // Para humano, currentColor se habrá establecido mediante chooseColor()
-  }
-  if (card.tipo === "wildDraw4") {
-    pendingDraw += 4;
-    skipNext = true;
-    if (player.type === "cpu") {
-      const opciones = ["rojo", "verde", "azul", "amarillo"];
-      currentColor = opciones[Math.floor(Math.random() * opciones.length)];
-    }
-  }
+  renderHands();
 }
 
-/* CALCULAR EL SIGUIENTE JUGADOR */
-function nextPlayer() {
-  let nextIndex = currentPlayerIndex;
-  if (skipNext) {
-    nextIndex = (nextIndex + direction + players.length) % players.length;
-    skipNext = false;
-  }
-  nextIndex = (nextIndex + direction + players.length) % players.length;
-  currentPlayerIndex = nextIndex;
-}
+// Al cargar la ventana se inicializa el juego y se asigna el evento del botón
+window.onload = function() {
+  crearDeck();
+  shuffle(deck);
+  repartirCartas();
+  renderHands();
 
-/* APLICAR LOS EFECTOS DE ROBAR (si pendingDraw > 0, se roban EXACTAMENTE pendingDraw cartas) */
-function applyPendingDraw(player, callback) {
-  let count = pendingDraw;
-  pendingDraw = 0; // Se resetea para no acumular
-  function drawNext(i) {
-    if (i < count) {
-      animateDrawCard(player, function() {
-        player.hand.push(drawCardFromDeck());
-        logMove(`${player.name} robó una carta.`);
-        renderGame();
-        drawNext(i + 1);
-      });
-    } else {
-      callback();
-    }
-  }
-  drawNext(0);
-}
-
-/* ROBAR CARTA (si el mazo se agota, rebarajar la pila de descarte) */
-function drawCardFromDeck() {
-  let card = deck.shift();
-  if (!card) {
-    let top = discardPile.pop();
-    deck = discardPile;
-    shuffle(deck);
-    discardPile = [top];
-    card = deck.shift();
-  }
-  return card;
-}
-
-/* ANIMAR EL ROBO: mueve un elemento desde el mazo hasta el área del jugador */
-function animateDrawCard(player, callback) {
-  let deckElem = document.getElementById("deck");
-  let target = (player.type === "human")
-    ? document.getElementById("player-bottom")
-    : document.getElementById("cpu-player-" + player.id);
-  let cardElem = document.createElement("div");
-  cardElem.className = "card animated-card";
-  cardElem.style.backgroundImage = deckElem.style.backgroundImage;
-  cardElem.style.backgroundSize = deckElem.style.backgroundSize;
-  cardElem.style.position = "fixed";
-  let deckRect = deckElem.getBoundingClientRect();
-  cardElem.style.left = deckRect.left + "px";
-  cardElem.style.top = deckRect.top + "px";
-  cardElem.style.width = deckRect.width + "px";
-  cardElem.style.height = deckRect.height + "px";
-  cardElem.style.transition = "all 0.8s ease-out";
-  document.body.appendChild(cardElem);
-  let targetRect = target.getBoundingClientRect();
-  let targetX = targetRect.left + (targetRect.width - deckRect.width) / 2;
-  let targetY = targetRect.top + (targetRect.height - deckRect.height) / 2;
-  cardElem.offsetWidth; // Forzar reflow
-  cardElem.style.left = targetX + "px";
-  cardElem.style.top = targetY + "px";
-  cardElem.addEventListener("transitionend", function() {
-    cardElem.remove();
-    callback();
-  });
-}
-
-/* TURNO DEL JUGADOR HUMANO */
-function humanPlayCard(cardIndex) {
-  let currentPlayer = players[currentPlayerIndex];
-  let card = currentPlayer.hand[cardIndex];
-  if (!isValidMove(card)) {
-    alert("Movimiento inválido. Elige otra carta o roba una.");
-    return;
-  }
-  currentPlayer.hand.splice(cardIndex, 1);
-  discardPile.push(card);
-  if ((card.tipo === "wild" || card.tipo === "wildDraw4") && currentPlayer.type === "human") {
-    chooseColor().then(chosenColor => {
-      currentColor = chosenColor;
-      processCardEffect(card, currentPlayer, true);
-      logMove(`Tú jugaste: ${getCardDescription(card)} y cambiaste el color a ${currentColor.toUpperCase()}`);
-      renderGame();
-      renderCenter();
-      if (currentPlayer.hand.length === 0) {
-        alert("¡Felicidades, ganaste!");
-        initializeGame();
-        return;
-      }
-      // Finalizar turno después de jugar
-      endTurn();
-    });
-  } else {
-    processCardEffect(card, currentPlayer);
-    logMove(`Tú jugaste: ${getCardDescription(card)}`);
-    renderGame();
-    renderCenter();
-    if (currentPlayer.hand.length === 0) {
-      alert("¡Felicidades, ganaste!");
-      initializeGame();
-      return;
-    }
-    endTurn();
-  }
-}
-
-/* ROBAR CARTA PARA HUMANO CON ANIMACIÓN (se roba exactamente 1 carta) */
-function humanDrawCard() {
-  if (players[currentPlayerIndex].type !== "human") return;
-  let drawnCard = drawCardFromDeck();
-  animateDrawCard(players[currentPlayerIndex], function() {
-    players[currentPlayerIndex].hand.push(drawnCard);
-    logMove("Tú robaste una carta.");
-    renderGame();
-    // No auto-play: el jugador debe decidir
-    endTurn();
-  });
-}
-
-/* TURNO DE LA CPU */
-function cpuTurn() {
-  let currentPlayer = players[currentPlayerIndex];
-  if (pendingDraw > 0) {
-    applyPendingDraw(currentPlayer, endTurn);
-    return;
-  }
-  // Buscar una carta jugable
-  let cardIndex = currentPlayer.hand.findIndex(card => isValidMove(card));
-  if (cardIndex !== -1) {
-    let card = currentPlayer.hand.splice(cardIndex, 1)[0];
-    discardPile.push(card);
-    processCardEffect(card, currentPlayer);
-    let nextIndex = (currentPlayerIndex + direction + players.length) % players.length;
-    let message = `${currentPlayer.name} jugó: ${getCardDescription(card)}`;
-    if (card.tipo === "skip") message += ` y saltó a ${players[nextIndex].name}`;
-    else if (card.tipo === "draw2") message += ` y obligó a ${players[nextIndex].name} a robar 2 cartas`;
-    else if (card.tipo === "wild") message += ` y cambió el color a ${currentColor.toUpperCase()}`;
-    else if (card.tipo === "wildDraw4") message += ` y obligó a ${players[nextIndex].name} a robar 4 cartas y cambió el color a ${currentColor.toUpperCase()}`;
-    else if (card.tipo === "reverse") message += ` y cambió la dirección`;
-    logMove(message);
-    renderGame();
-    renderCenter();
-    if (currentPlayer.hand.length === 0) {
-      alert(`${currentPlayer.name} gana la partida.`);
-      initializeGame();
-      return;
-    }
-    endTurn();
-  } else {
-    // Si no tiene carta jugable, robar 1 carta
-    let drawnCard = drawCardFromDeck();
-    animateDrawCard(currentPlayer, function() {
-      currentPlayer.hand.push(drawnCard);
-      logMove(`${currentPlayer.name} robó una carta.`);
-      renderGame();
-      // Si la carta robada es jugable, se juega automáticamente
-      if (isValidMove(drawnCard)) {
-        setTimeout(() => {
-          let idx = currentPlayer.hand.indexOf(drawnCard);
-          if (idx !== -1) {
-            currentPlayer.hand.splice(idx, 1);
-            discardPile.push(drawnCard);
-            processCardEffect(drawnCard, currentPlayer);
-            let nextIndex = (currentPlayerIndex + direction + players.length) % players.length;
-            let message = `${currentPlayer.name} robó y jugó: ${getCardDescription(drawnCard)}`;
-            if (drawnCard.tipo === "skip") message += ` y saltó a ${players[nextIndex].name}`;
-            else if (drawnCard.tipo === "draw2") message += ` y obligó a ${players[nextIndex].name} a robar 2 cartas`;
-            else if (drawnCard.tipo === "wild") message += ` y cambió el color a ${currentColor.toUpperCase()}`;
-            else if (drawnCard.tipo === "wildDraw4") message += ` y obligó a ${players[nextIndex].name} a robar 4 cartas y cambió el color a ${currentColor.toUpperCase()}`;
-            else if (drawnCard.tipo === "reverse") message += ` y cambió la dirección`;
-            logMove(message);
-            renderGame();
-            renderCenter();
-            if (currentPlayer.hand.length === 0) {
-              alert(`${currentPlayer.name} gana la partida.`);
-              initializeGame();
-              return;
-            }
-          }
-          endTurn();
-        }, 2000);
-      } else {
-        endTurn();
-      }
-    });
-  }
-}
-
-/* ANIMAR EL ROBO: crea un elemento que se mueve desde el mazo hasta el área del jugador */
-function animateDrawCard(player, callback) {
-  let deckElem = document.getElementById("deck");
-  let target = (player.type === "human")
-    ? document.getElementById("player-bottom")
-    : document.getElementById("cpu-player-" + player.id);
-  let cardElem = document.createElement("div");
-  cardElem.className = "card animated-card";
-  cardElem.style.backgroundImage = deckElem.style.backgroundImage;
-  cardElem.style.backgroundSize = deckElem.style.backgroundSize;
-  cardElem.style.position = "fixed";
-  let deckRect = deckElem.getBoundingClientRect();
-  cardElem.style.left = deckRect.left + "px";
-  cardElem.style.top = deckRect.top + "px";
-  cardElem.style.width = deckRect.width + "px";
-  cardElem.style.height = deckRect.height + "px";
-  cardElem.style.transition = "all 0.8s ease-out";
-  document.body.appendChild(cardElem);
-  let targetRect = target.getBoundingClientRect();
-  let targetX = targetRect.left + (targetRect.width - deckRect.width) / 2;
-  let targetY = targetRect.top + (targetRect.height - deckRect.height) / 2;
-  cardElem.offsetWidth; // Forzar reflow
-  cardElem.style.left = targetX + "px";
-  cardElem.style.top = targetY + "px";
-  cardElem.addEventListener("transitionend", function() {
-    cardElem.remove();
-    callback();
-  });
-}
-
-/* ROBAR CARTA DEL MAZO (si se agota, rebarajar la pila de descarte) */
-function drawCardFromDeck() {
-  let card = deck.shift();
-  if (!card) {
-    let top = discardPile.pop();
-    deck = discardPile;
-    shuffle(deck);
-    discardPile = [top];
-    card = deck.shift();
-  }
-  return card;
-}
-
-/* INICIAR EL JUEGO AL CARGAR LA PÁGINA */
-window.onload = initializeGame;
+  // Asigna el evento una sola vez para evitar duplicados
+  document.getElementById('draw-card').onclick = function() {
+    playerHand.push(deck.pop());
+    renderHands();
+  };
+};
