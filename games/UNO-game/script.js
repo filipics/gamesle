@@ -1,4 +1,4 @@
-// Variables y funciones básicas para crear y barajar el mazo
+// Variables y funciones para crear y barajar el mazo
 let deck = [];
 const colores = ['rojo', 'amarillo', 'verde', 'azul'];
 const numeros = ['0','1','2','3','4','5','6','7','8','9'];
@@ -32,93 +32,135 @@ function shuffle(array) {
   }
 }
 
-// Variables para las manos y la pila de descartes
-let playerHand = [];
-let computerHand = [];
+// Se usa un array "hands" para almacenar las manos de los 4 jugadores
+// Índice 0: jugador humano, índices 1-3: jugadores de la PC
+let hands = [[], [], [], []];
 let discardPile = [];
 
-// Repartir 7 cartas a cada uno y sacar la primera carta para iniciar el descarte
+// Variable que controla el turno: 0 es humano, 1 a 3 son PCs
+let currentPlayer = 0;
+
+// Repartir 7 cartas a cada jugador y sacar una para iniciar la pila de descartes
 function repartirCartas() {
   for (let i = 0; i < 7; i++) {
-    playerHand.push(deck.pop());
-    computerHand.push(deck.pop());
+    for (let p = 0; p < 4; p++) {
+      hands[p].push(deck.pop());
+    }
   }
   discardPile.push(deck.pop());
 }
 
-// Actualizar la interfaz con las cartas actuales
+// Función para actualizar la interfaz (manos, pila de descartes y turno)
 function renderHands() {
-  // Mostrar cartas del jugador
+  // Renderizar manos de las PCs
+  for (let p = 1; p < 4; p++) {
+    const compDiv = document.querySelector(`#computer-hand-${p}`);
+    const cardsDiv = compDiv.querySelector('.cards');
+    cardsDiv.innerHTML = '';
+    hands[p].forEach(() => {
+      const cardElem = document.createElement('div');
+      cardElem.className = 'card';
+      cardElem.textContent = '🂠';
+      cardsDiv.appendChild(cardElem);
+    });
+    // Actualizar el título con la cantidad de cartas
+    const header = compDiv.querySelector('h2');
+    header.textContent = `PC ${p} (${hands[p].length} cartas)`;
+  }
+  
+  // Renderizar la mano del jugador humano
   const playerDiv = document.querySelector('#player-hand .cards');
   playerDiv.innerHTML = '';
-  playerHand.forEach((carta, index) => {
+  hands[0].forEach((carta, index) => {
     const cardElem = document.createElement('div');
     cardElem.className = 'card';
     cardElem.textContent = `${carta.color} ${carta.numero}`;
-    cardElem.addEventListener('click', () => jugarCarta(index));
+    // Solo se añade el evento de click si es el turno del jugador humano
+    if (currentPlayer === 0) {
+      cardElem.addEventListener('click', () => jugarCarta(index));
+    }
     playerDiv.appendChild(cardElem);
-  });
-  
-  // Mostrar cartas de la PC como reverso
-  const computerDiv = document.querySelector('#computer-hand .cards');
-  computerDiv.innerHTML = '';
-  computerHand.forEach(() => {
-    const cardElem = document.createElement('div');
-    cardElem.className = 'card';
-    cardElem.textContent = '🂠';
-    computerDiv.appendChild(cardElem);
   });
   
   // Mostrar la última carta en la pila de descartes
   const discardDiv = document.querySelector('#discard-pile .card');
   const ultimaCarta = discardPile[discardPile.length - 1];
   discardDiv.textContent = `${ultimaCarta.color} ${ultimaCarta.numero}`;
+  
+  // Indicador de turno
+  const turnIndicator = document.getElementById('turn-indicator');
+  if (currentPlayer === 0) {
+    turnIndicator.textContent = "Tu turno";
+  } else {
+    turnIndicator.textContent = `Turno de PC ${currentPlayer}`;
+  }
+  
+  // Habilitar o deshabilitar el botón de "Robar Carta" según el turno
+  const drawButton = document.getElementById('draw-card');
+  drawButton.disabled = (currentPlayer !== 0);
 }
 
-// Función para jugar una carta desde la mano del jugador
+// Función para validar si la jugada es válida
+function isValidMove(carta, ultimaCarta) {
+  return carta.color === 'comodin' || carta.color === ultimaCarta.color || carta.numero === ultimaCarta.numero;
+}
+
+// Función para que el jugador humano juegue una carta
 function jugarCarta(index) {
-  const carta = playerHand[index];
+  if (currentPlayer !== 0) return; // Solo permite si es tu turno
+  const carta = hands[0][index];
   const ultimaCarta = discardPile[discardPile.length - 1];
-  // Se permite jugar si la carta es comodín o coincide en color o número
-  if (carta.color === 'comodin' || carta.color === ultimaCarta.color || carta.numero === ultimaCarta.numero) {
+  if (isValidMove(carta, ultimaCarta)) {
     discardPile.push(carta);
-    playerHand.splice(index, 1);
+    hands[0].splice(index, 1);
     renderHands();
-    setTimeout(turnoComputadora, 1000); // Turno de la PC
+    nextTurn();
   } else {
     alert("No puedes jugar esa carta");
   }
 }
 
-// Lógica básica para el turno de la PC
+// Función para el turno de los jugadores de la PC
 function turnoComputadora() {
+  const hand = hands[currentPlayer];
   const ultimaCarta = discardPile[discardPile.length - 1];
   let jugadaRealizada = false;
-  for (let i = 0; i < computerHand.length; i++) {
-    const carta = computerHand[i];
-    if (carta.color === 'comodin' || carta.color === ultimaCarta.color || carta.numero === ultimaCarta.numero) {
-      discardPile.push(carta);
-      computerHand.splice(i, 1);
+  for (let i = 0; i < hand.length; i++) {
+    if (isValidMove(hand[i], ultimaCarta)) {
+      discardPile.push(hand[i]);
+      hand.splice(i, 1);
       jugadaRealizada = true;
       break;
     }
   }
   if (!jugadaRealizada) {
-    computerHand.push(deck.pop());
+    hand.push(deck.pop());
   }
   renderHands();
+  nextTurn();
 }
 
-// Al cargar la ventana se inicializa el juego y se asigna el evento del botón
+// Función para avanzar el turno
+function nextTurn() {
+  // Aquí se puede agregar lógica para comprobar si algún jugador ganó
+  currentPlayer = (currentPlayer + 1) % 4;
+  renderHands();
+  // Si no es turno del humano, ejecutar la jugada de la PC con un retardo
+  if (currentPlayer !== 0) {
+    setTimeout(turnoComputadora, 1000);
+  }
+}
+
+// Al cargar la ventana se inicializa el juego y se asigna el evento del botón "Robar Carta"
 window.onload = function() {
   crearDeck();
   shuffle(deck);
   repartirCartas();
   renderHands();
-
-  // Asigna el evento una sola vez para evitar duplicados
+  
   document.getElementById('draw-card').onclick = function() {
-    playerHand.push(deck.pop());
+    if (currentPlayer !== 0) return;
+    hands[0].push(deck.pop());
     renderHands();
   };
 };
