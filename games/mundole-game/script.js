@@ -384,14 +384,14 @@ function calcularDireccion(lat1, lon1, lat2, lon2) {
   let dLon = lon1 - lon2;
   let angulo = Math.atan2(dLon, dLat) * (180 / Math.PI);
   if (angulo < 0) angulo += 360;
-  if (angulo >= 350 || angulo < 10) return "S";
-  if (angulo >= 80 && angulo < 100) return "O";
-  if (angulo >= 170 && angulo < 190) return "N";
-  if (angulo >= 260 && angulo < 280) return "E";
-  if (angulo >= 10 && angulo < 80) return "SO";
-  if (angulo >= 100 && angulo < 170) return "NO";
-  if (angulo >= 190 && angulo < 260) return "NE";
-  return "SE";
+  if (angulo >= 350 || angulo < 10) return "S⬇️";
+  if (angulo >= 80 && angulo < 100) return "O⬅️";
+  if (angulo >= 170 && angulo < 190) return "N⬆️";
+  if (angulo >= 260 && angulo < 280) return "E➡️";
+  if (angulo >= 10 && angulo < 80) return "SO↙️";
+  if (angulo >= 100 && angulo < 170) return "NO↖️";
+  if (angulo >= 190 && angulo < 260) return "NE↗️";
+  return "SE↘️";
 }
 
 // ==================== Mostrar Mapa (NUEVO) ==================== 
